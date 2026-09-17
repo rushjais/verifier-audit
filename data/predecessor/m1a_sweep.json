@@ -1,0 +1,67 @@
+[
+  {
+    "task_id": "HumanEval/81",
+    "generated": 20,
+    "distinct_shapes": 16,
+    "verified": 19,
+    "discarded": 1,
+    "honest_pass_stock": 1.0,
+    "honest_pass_hardened": 1.0,
+    "catch_rate_stock": 0.625,
+    "catch_rate_hardened": 0.625,
+    "flake_rate": 0.0,
+    "rejected_by_hardening": []
+  },
+  {
+    "task_id": "HumanEval/105",
+    "generated": 20,
+    "distinct_shapes": 19,
+    "verified": 20,
+    "discarded": 0,
+    "honest_pass_stock": 1.0,
+    "honest_pass_hardened": 1.0,
+    "catch_rate_stock": 1.0,
+    "catch_rate_hardened": 1.0,
+    "flake_rate": 0.0,
+    "rejected_by_hardening": []
+  },
+  {
+    "task_id": "HumanEval/6",
+    "generated": 20,
+    "distinct_shapes": 18,
+    "verified": 17,
+    "discarded": 3,
+    "honest_pass_stock": 1.0,
+    "honest_pass_hardened": 1.0,
+    "catch_rate_stock": 1.0,
+    "catch_rate_hardened": 1.0,
+    "flake_rate": 0.0,
+    "rejected_by_hardening": []
+  },
+  {
+    "task_id": "HumanEval/75",
+    "generated": 20,
+    "distinct_shapes": 20,
+    "verified": 19,
+    "discarded": 1,
+    "honest_pass_stock": 1.0,
+    "honest_pass_hardened": 1.0,
+    "catch_rate_stock": 0.75,
+    "catch_rate_hardened": 0.75,
+    "flake_rate": 0.0,
+    "rejected_by_hardening": []
+  },
+  {
+    "task_id": "HumanEval/39",
+    "generated": 20,
+    "distinct_shapes": 19,
+    "verified": 18,
+    "discarded": 2,
+    "honest_pass_stock": 1.0,
+    "honest_pass_hardened": 1.0,
+    "catch_rate_stock": 1.0,
+    "catch_rate_hardened": 1.0,
+    "flake_rate": 0.0,
+    "rejected_by_hardening": []
+  }
+]

@@ -115,7 +115,9 @@ verified-correct solutions rejected. Recorded, not dropped. Credible only becaus
 16–20 structurally distinct solution shapes out of 20 per task, measured by AST fingerprint with
 names erased. A null over a homogeneous population would mean nothing.
 
-**This is the one result here with no reproduce path.** The hardening track was deliberately
+**This is the one result here with no reproduce path.** Its artifact is archived at
+`data/predecessor/m1a_sweep.json` — produced by code that is not in this repository — so the claim
+rests on a file rather than only a sentence. The hardening track was deliberately
 dropped in the clean-room rewrite — its patch template was my former teammates' code, and the
 result was null — so the sweep that ships with this repository has no hardened column and cannot
 produce this number. It stands as a result from the predecessor repository only. Re-adding a
