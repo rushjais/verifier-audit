@@ -11,6 +11,8 @@ import subprocess
 from pathlib import Path
 
 from .manifest import POPULATION, Entry, report
+from .roms import ROM_DIR, SUITE_COMMIT, SUITE_LICENCE, SUITE_URL
+from .roms import report as rom_report
 
 POPULATION_DIR = Path(".population")
 
@@ -46,12 +48,31 @@ def fetch(entry: Entry) -> bool:
     return True
 
 
+def fetch_roms() -> bool:
+    """Clone the test suite at its pinned commit. Nothing from it is committed or redistributed."""
+    if ROM_DIR.exists():
+        head = subprocess.run(
+            ["git", "-C", str(ROM_DIR), "rev-parse", "HEAD"], capture_output=True, text=True
+        )
+        if head.returncode == 0 and head.stdout.strip() == SUITE_COMMIT:
+            print(f"ok   roms: already at {SUITE_COMMIT[:8]}")
+            return True
+    else:
+        ROM_DIR.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["git", "clone", "-q", SUITE_URL, str(ROM_DIR)], check=True)
+    subprocess.run(["git", "-C", str(ROM_DIR), "checkout", "-q", SUITE_COMMIT], check=True)
+    print(f"got  roms: {SUITE_COMMIT[:8]} ({SUITE_LICENCE}, not redistributed)")
+    return True
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="fetch the CHIP-8 population")
     parser.add_argument("--status", action="store_true")
     args = parser.parse_args(argv)
 
     print(report())
+    print()
+    print(rom_report())
     if args.status:
         print()
         for entry in POPULATION:
@@ -61,6 +82,7 @@ def main(argv=None) -> int:
     print()
     for entry in POPULATION:
         fetch(entry)
+    fetch_roms()
     return 0
 
 

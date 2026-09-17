@@ -23,6 +23,16 @@ WIDTH, HEIGHT = 64, 32
 _PYGAME_KEYS = ("K_x K_1 K_2 K_3 K_q K_w K_e K_a K_s K_d K_z K_c K_4 K_r K_f K_v").split()
 
 
+class _NoKeysPressed:
+    """What pygame.key.get_pressed() returns when nothing is held: indexable, always False."""
+
+    def __getitem__(self, _index) -> bool:
+        return False
+
+    def __len__(self) -> int:
+        return 512  # larger than any pygame key constant
+
+
 def _stub_pygame() -> None:
     """Satisfy a module-scope `import pygame` used only for live keyboard, sound, and a window.
 
@@ -35,7 +45,12 @@ def _stub_pygame() -> None:
         return
     pygame = types.ModuleType("pygame")
     key = types.ModuleType("pygame.key")
-    key.get_pressed = lambda: {}
+    # pygame.key.get_pressed() returns a SEQUENCE indexable by any key constant. Returning {}
+    # raised KeyError the moment an interpreter executed EX9E (skip-if-key-pressed), which read
+    # as "this interpreter crashes on the quirks ROM" and nearly got a working implementation
+    # excluded from the population as broken. Model the real contract: indexable by anything,
+    # always not-pressed.
+    key.get_pressed = lambda: _NoKeysPressed()
     mixer = types.ModuleType("pygame.mixer")
     mixer.init = lambda *a, **k: None
     mixer.quit = lambda *a, **k: None
@@ -55,8 +70,10 @@ def _stub_pygame() -> None:
     event.pump = lambda *a, **k: None
     draw = types.ModuleType("pygame.draw")
     draw.rect = lambda *a, **k: None
-    for name in _PYGAME_KEYS:
-        setattr(pygame, name, 0)
+    # Distinct values: their code maps CHIP-8 keys onto these constants, and making them all
+    # equal would silently collapse sixteen keys into one.
+    for index, name in enumerate(_PYGAME_KEYS):
+        setattr(pygame, name, index + 1)
     pygame.Rect = lambda *a, **k: types.SimpleNamespace()
     pygame.QUIT = 256
     pygame.init = lambda *a, **k: None

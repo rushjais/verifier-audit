@@ -117,3 +117,21 @@ def test_running_one_interpreter_cannot_change_another_s_output():
     after = build(first, path_for(first)).frames(DRAW_ZERO, 3)
 
     assert alone == after, f"{second.key} changed what {first.key} produced"
+
+
+@needs_population
+def test_the_key_stub_models_pygames_actual_contract():
+    """get_pressed() returns an indexable sequence, not a dict. Returning {} raised KeyError the
+    moment an interpreter executed EX9E, which read as "this implementation crashes" and nearly
+    got a working one excluded from the population as broken."""
+    from vaudit.tasks.chip8.adapters import _stub_pygame
+
+    _stub_pygame()
+    import pygame
+
+    pressed = pygame.key.get_pressed()
+    assert pressed[0] is False
+    assert pressed[pygame.K_x] is False
+    assert len({getattr(pygame, n) for n in ("K_x", "K_1", "K_2", "K_q")}) == 4, (
+        "key constants must be distinct or sixteen keys collapse into one"
+    )
