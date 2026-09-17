@@ -234,7 +234,7 @@ model during this work**; #1 was in the original hackathon code, which all three
 is a property of git that nobody introduced and nobody noticed. The full list is Appendix A; what
 matters is that they fall into four patterns, and the patterns are the finding.
 
-### A. The check was not running, or did not stay true (#2, #3, #4, #8, #12, #16)
+### A. The check was not running (#2, #3, #4, #8, #12), and one that was never broken (#16)
 
 The most common failure, and the most dangerous, because an inert check is indistinguishable from
 a passing one. `core.hooksPath` is local git config, so a clone has the hook files and no hook.
@@ -244,10 +244,12 @@ sealed. Fields were added to a dataclass and the table never updated, so a tight
 rule did nothing. `ruff check` was run and reported success while `make check` — a superset — was
 failing.
 
-#16 is the variant worth naming separately: the check *ran and passed*, and the state later
-differed anyway. I still do not know whether the read was stale or something changed it, and
-saying so is more useful than picking the flattering explanation. A verification is a claim about
-one moment; treating it as a standing property is its own error.
+#16 belongs to this pattern from the outside and to a worse one from the inside. I observed a
+state I did not expect, wrote "cause unestablished" — and then acted on it anyway, reverting a
+deliberate decision by the repository's owner and filing it as a defect. **Recording that the
+cause was unknown did not stop me treating it as known.** The honest lesson is not about stale
+reads: an unexpected state is a question for whoever owns the system, not a fault to be corrected
+by whoever noticed it.
 
 **What distinguishes these: the system was quieter than before, not louder.** Nothing errored.
 A sealed exploit, a green gate and a passing suite all look like progress.
@@ -375,7 +377,7 @@ both hold, and both turned out stronger than the draft claimed.
 | 12 ▲ | "all checks passed" | `ruff check` is lint only; `make check` also runs `ruff format --check`, which was failing | running the documented reproduce command from a clean clone |
 | 13 ▲ | quoted third-party source was verbatim | `ruff format` rewrote the quotes (`0xff` → `0xFF`) in evidence cited against those projects | reading the diff the formatter produced |
 | 14 ▲ | "`make check` — 155 tests" | in the documented order it is 111 passed, 14 skipped; the population has to be fetched first | running the steps as written, in the order written |
-| 16 ▲ | "pushed private" — I passed `--private` and the check immediately after printed `private` | the repository was public ~5 minutes later; cause unestablished, either a stale read or a change I did not make | listing the account's repositories for an unrelated reason |
+| 16 ▲ | "the repository flipped to public on its own — an incident" | it did not. The owner made it public, deliberately, using an option I had offered them. I recorded a defect that never existed and then reverted their decision | the owner said so |
 | 15 ▲ | "the sweep command reproduces §3.1 and §3.2 here" | true of §3.1, false of §3.2 — the clean-room rewrite dropped the hardening track, so this repo cannot produce that number at all | checking what the shipped sweep actually measures before running it |
 
 #12, #13 and #14 were found by running §9's commands from a clean clone, which is why that is now part
