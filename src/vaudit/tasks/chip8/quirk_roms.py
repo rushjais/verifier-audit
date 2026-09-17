@@ -120,8 +120,34 @@ def displacement(v1: int, v2: int) -> int:
     return abs((v1 >> 1) - (v2 >> 1))
 
 
+# --- ROM C: the sprite-clipping quirk, per Amendment 7 ----------------------------------------
+#
+#   0x200  613E   V1 = 62        ; x, hard against the right edge
+#   0x202  6200   V2 = 0         ; y
+#   0x204  6000   V0 = 0         ; digit 0
+#   0x206  F029   I  = font(V0)
+#   0x208  D125   draw glyph at (V1, V2), 5 rows
+#   0x20A  120A   jump self
+#
+# Wrapping puts the overflowing columns at x=0; clipping does not draw them. A THIRD kind of
+# divergence — partial addition, not relocation and not substitution — with ROM B's one-block
+# geometry. Amendment 7 uses it to separate "kind matters" from "block count matters".
+WRAP_ROM = bytes([0x61, 0x3E, 0x62, 0x00, 0x60, 0x00, 0xF0, 0x29, 0xD1, 0x25, 0x12, 0x0A])
+
+WRAP_ROM_SOURCE = """\
+# wrap.8o — isolates the sprite-clipping quirk. Assembles to the bytes in WRAP_ROM.
+: main
+  v1 := 62       # hard against the right edge
+  v2 := 0
+  v0 := 0
+  i := hex v0
+  sprite v1 v2 5 # wrapping interpreters continue at x=0; clipping ones stop
+  loop again
+"""
+
 SHIFT_TARGET = "shift_uses_vy"
 INDEX_TARGET = "memory_increments_i"
+WRAP_TARGET = "sprites_wrap"
 ALL_QUIRKS = ("shift_uses_vy", "memory_increments_i", "jump_uses_vx", "vf_reset", "sprites_wrap")
 
 

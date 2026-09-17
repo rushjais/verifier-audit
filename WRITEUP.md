@@ -309,6 +309,32 @@ recording — the sliding-window version **does** decline mildly with distance (
 where the block version is flat. So "block count, not distance" is exact for block pooling and
 approximate for window pooling; the qualitative failure holds for both.
 
+#### ROM C: a third kind, and what actually predicts the outcome
+
+Two ROMs could not distinguish "divergence *kind* matters" from "*block count* matters" — in ROMs
+A and B the two are perfectly confounded. ROM C (`wrap.ch8`, 12 bytes, same four gates) isolates
+the sprite-clipping quirk by drawing the glyph at x=62: wrapping interpreters continue at x=0,
+clipping ones do not. That is a **third kind** — partial addition, where the frames share most of
+their content and one simply has more — with ROM B's **one-block** geometry.
+
+| | kind | blocks | worst correct (SSIM) | blank | separates? |
+| --- | --- | --- | --- | --- | --- |
+| ROM A | relocation | 2 | 0.9375 | 0.9688 | **none of the five** |
+| ROM B | substitution | 1 | 0.9943 | 0.9688 | pixel proportion, SSIM |
+| ROM C | partial addition | 1 | 0.9688 | 0.9375 | pixel proportion, SSIM |
+
+**Prediction 16 holds on the behavioural test and is marginal on the numeric one.** ROM C behaves
+like ROM B — divergent above blank, two strategies separating — despite being a different kind,
+which is what the prediction was for. But its 0.9688 sits nearly midway between the other two,
+nearer ROM B by 0.0255 against 0.0313. Reported as marginal rather than clean.
+
+**ROM C also produced three distinct frames, not two.** `robertolaru` and `cwithmichael` wrap, but
+place the wrapped columns one row lower than the other wrapping interpreters. That is not a
+documented quirk and is more likely a defect; it has **not** been verified either way, and it is
+the reason ROM C's worst-correct score is lower than ROM B's. A population that quietly contains a
+bug alongside a quirk is exactly the confound Amendment 2 rule 2 exists to prevent, and under the
+strict rule neither interpreter is eligible here.
+
 **The eligibility rule changes the conclusion** — the flip Amendment 4 said to report as the
 finding rather than resolve:
 
@@ -344,8 +370,9 @@ replaced with cheats chosen after seeing the numbers.
 | 13 | GMSD does not reproduce its reported failure; ranks like SSIM | **miss** — they agree on blank-vs-correct and disagree totally on inversion (1.0000 vs −0.0160). GMSD fails here, differently |
 | 14 | SSIM scores the divergence higher on ROM B than on ROM A (one disturbed block, not two) | **hit** — 0.9375 → 0.9943, clearing the blank screen and separating. Confirms the mechanism and scopes the finding to displacement |
 | 15 | SSIM does not degrade monotonically with displacement; 4px and 24px within 0.02 | **hit** — identical at 0.9375 for 4, 8, 16 and 24. Block count predicts the score; distance does not |
+| 16 | a third divergence *kind* with one-block geometry behaves like ROM B, not ROM A | **marginal hit** — separates like ROM B and scores above its blank screen, but 0.9688 sits nearly midway between the two, nearer B by 0.0255 vs 0.0313 |
 
-Six evaluated, five hit, one missed. **#13 was registered as one I expected to get wrong**, and
+Seven evaluated, five hit, one marginal, one missed. **#13 was registered as one I expected to get wrong**, and
 it is the one that produced the sharper finding. **#14 was registered specifically so that a
 mechanism I had already published in §3.6 could be falsified** — it could have shown the
 explanation was wrong while the headline number stood. It did not, and the claim is narrower and

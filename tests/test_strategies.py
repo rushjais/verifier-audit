@@ -45,3 +45,33 @@ def test_separation_returns_none_when_a_cheat_outscores_a_correct_candidate():
     assert separates(correct=[0.9], cheats=[0.5]) == pytest.approx(0.7)
     assert separates(correct=[0.9], cheats=[0.95]) is None
     assert separates(correct=[], cheats=[0.1]) is None
+
+
+def test_cheats_must_derive_from_the_designated_reference():
+    """A cheat built from a differently-quirked interpreter can be byte-identical to a correct
+    one, and then no threshold can separate them — which reads as a strategy failure and is not.
+
+    On ROM C, cheats derived from a clipping interpreter were identical to the two correct
+    interpreters that clip, while the designated reference wraps.
+    """
+    from vaudit.tasks.chip8 import all_cheats
+    from vaudit.tasks.chip8.adapters import build
+    from vaudit.tasks.chip8.fetch import is_fetched, path_for
+    from vaudit.tasks.chip8.manifest import POPULATION, usable_population
+    from vaudit.tasks.chip8.quirk_roms import WRAP_ROM
+
+    fetched = [e for e in usable_population() if is_fetched(e)]
+    if not fetched:
+        pytest.skip("population not fetched")
+
+    ref_entry = next(e for e in POPULATION if e.key == "craigthomas")
+    reference = build(ref_entry, path_for(ref_entry))
+    correct = {build(e, path_for(e)).frames(WRAP_ROM, 30)[-1] for e in fetched}
+    cheat_frames = {c.frames(WRAP_ROM, 30)[-1] for c in all_cheats(reference)}
+
+    ref_frame = reference.frames(WRAP_ROM, 30)[-1]
+    live = cheat_frames - {ref_frame}
+    assert not (live & correct), (
+        "a cheat is byte-identical to a correct implementation; cheats must be derived from the "
+        "designated reference, not from a differently-quirked interpreter"
+    )
