@@ -202,8 +202,10 @@ class Chip8:
             case 0x0 if op == 0x00EE:
                 self.pc = self.stack.pop() if self.stack else self._halt()
             case 0x1:
-                if nnn == self.pc - 2:
-                    self.halted = True  # tight self-loop: the ROM is done
+                # No self-loop detection. Real interpreters keep executing the jump, and a ROM
+                # that ends in one still burns its instruction budget there. Halting early was a
+                # convenience I invented, and it broke the frame rule: the reference ran 21
+                # instructions where every other implementation ran 90.
                 self.pc = nnn
             case 0x2:
                 self.stack.append(self.pc)

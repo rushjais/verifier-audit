@@ -172,3 +172,29 @@ def test_the_correctness_gate_decides_eligibility_by_the_roms_verdict_not_by_agr
     assert any(v > 0 for k, v in failures.items() if k != "reference"), (
         "no interpreter failed anything; the gate is not doing its job"
     )
+
+
+@needs_population
+@pytest.mark.parametrize("entry", _fetched, ids=lambda e: e.key)
+def test_every_adapter_executes_exactly_the_frame_rule(entry):
+    """A frame built from 12 instructions against one built from 15 measures pacing, not
+    correctness. These projects disagree about the count (wyattferguson 12/tick, debugloop
+    1/cycle), so the rule is enforced per adapter rather than assumed."""
+    from vaudit.tasks.chip8.harness import CYCLES_PER_FRAME
+    from vaudit.tasks.chip8.roms import BY_KEY
+
+    adapter = build(entry, path_for(entry))
+    adapter.frames(BY_KEY["ibm_logo"].load(), 6)
+    assert adapter.instructions == 6 * CYCLES_PER_FRAME, (
+        f"{entry.key} ran {adapter.instructions}, expected {6 * CYCLES_PER_FRAME}"
+    )
+
+
+@needs_population
+def test_the_reference_obeys_the_same_frame_rule():
+    from vaudit.tasks.chip8.harness import CYCLES_PER_FRAME
+    from vaudit.tasks.chip8.roms import BY_KEY
+
+    reference = NativeInterpreter("reference", COSMAC_VIP)
+    reference.frames(BY_KEY["ibm_logo"].load(), 6)
+    assert reference.instructions == 6 * CYCLES_PER_FRAME

@@ -20,6 +20,16 @@ from .core import HEIGHT, WIDTH, Chip8, Quirks
 # compare, and serialise cheaply — there will be thousands of them.
 Frame = bytes
 
+# THE FRAME RULE. One frame is exactly this many instructions, executed by every interpreter,
+# whoever wrote it. It is enforced per adapter and tested, because it is not free: these projects
+# disagree about it (wyattferguson runs 12 per tick, debugloop 1 per cycle), and comparing a frame
+# built from 12 instructions against one built from 15 measures pacing, not correctness.
+#
+# What is deliberately NOT normalised is timer semantics. craigthomas decrements on demand,
+# wyattferguson once per cycle(), and debugloop every fifth cycle via a counter it never resets —
+# so after the fifth it decrements on every one. Making those agree would mean rewriting their
+# code, which is the line this study does not cross. It is a documented limitation: any ROM whose
+# final frame depends on delay-timer pacing is not safely comparable across this population.
 CYCLES_PER_FRAME = 15  # ~900 instructions/second at 60fps, the conventional CHIP-8 rate
 BLANK: Frame = bytes(WIDTH * HEIGHT)
 
@@ -39,17 +49,20 @@ class NativeInterpreter:
     quirks: Quirks
     seed: int = 0
     cycles_per_frame: int = CYCLES_PER_FRAME
+    instructions: int = 0
 
     def frames(self, rom: bytes, count: int) -> list[Frame]:
         """Exactly `count` frames. A halted ROM repeats its last frame rather than ending early,
         so every sequence is the same length and metrics compare like with like."""
         machine = Chip8(quirks=self.quirks, seed=self.seed).load(rom)
+        self.instructions = 0
         out: list[Frame] = []
         for _ in range(count):
             for _ in range(self.cycles_per_frame):
                 if machine.halted:
                     break
                 machine.step()
+                self.instructions += 1
             machine.tick_timers()
             out.append(bytes(machine.display))
         return out

@@ -155,6 +155,7 @@ class craigthomas_adapter:
     root: Path
     name: str = "craigthomas"
     quirks: dict = field(default_factory=dict)
+    instructions: int = 0  # instructions actually executed by the last frames() call
 
     def frames(self, rom: bytes, count: int) -> list[Frame]:
         _stub_pygame()
@@ -169,10 +170,13 @@ class craigthomas_adapter:
         for offset, byte in enumerate(rom):
             cpu.memory[0x200 + offset] = byte
 
+        self.instructions = 0
         out: list[Frame] = []
         for _ in range(count):
             for _ in range(CYCLES_PER_FRAME):
                 cpu.execute_instruction()
+                self.instructions += 1
+            cpu.decrement_timers()  # their emulator.py does this per frame; the CPU does not
             out.append(bytes(screen.pixels))
         return out
 
@@ -189,23 +193,41 @@ class wyattferguson_adapter:
     root: Path
     name: str = "wyattferguson"
     quirks: dict = field(default_factory=dict)
+    instructions: int = 0  # instructions actually executed by the last frames() call
 
     def frames(self, rom: bytes, count: int) -> list[Frame]:
         _stub_pygame()
         with _isolated(self.root, "chip8"):
+            import chip8.cpu as cpu_module
             from chip8.audio import Audio
             from chip8.cpu import CPU
             from chip8.keypad import Keypad
             from chip8.ram import RAM
             from chip8.screen import Screen
 
+            # Their cycle() is one 60Hz tick: timers once, then CPU_CYCLES_PER_TICK instructions.
+            # That constant is 12; the study's frame is CYCLES_PER_FRAME. Retuning it is a
+            # configuration change of the same kind as setting a quirk flag — no logic is
+            # altered — and without it this adapter would build frames from 12 instructions
+            # while every other built them from 15.
+            cpu_module.CPU_CYCLES_PER_TICK = CYCLES_PER_FRAME
+
         with tempfile.TemporaryDirectory() as tmp:
             rom_path = Path(tmp) / "rom.ch8"
             rom_path.write_bytes(rom)
             cpu = CPU(RAM(str(rom_path)), Screen(), Keypad(), Audio(mute=True))
+            self.instructions = 0
+            decode = cpu.decode
+
+            def counted_decode():
+                self.instructions += 1
+                return decode()
+
+            cpu.decode = counted_decode
+
             out: list[Frame] = []
             for _ in range(count):
-                cpu.cycle()  # their cycle() is already one tick's worth of instructions
+                cpu.cycle()  # one tick: timers once, then CYCLES_PER_FRAME instructions
                 out.append(_from_rows(cpu.screen.buffer))
             return out
 
@@ -264,6 +286,7 @@ class debugloop_adapter:
     root: Path
     name: str = "debugloop"
     quirks: dict = field(default_factory=dict)
+    instructions: int = 0  # instructions actually executed by the last frames() call
 
     def frames(self, rom: bytes, count: int) -> list[Frame]:
         with _isolated(self.root, "emu", "ui"):
@@ -279,10 +302,12 @@ class debugloop_adapter:
             rom_path.write_bytes(rom)
             ui = DebugloopUI()
             machine = emu.Chip8(str(rom_path), ui)
+            self.instructions = 0
             out: list[Frame] = []
             for _ in range(count):
                 for _ in range(CYCLES_PER_FRAME):
-                    machine.cycle()
+                    machine.cycle()  # their cycle() is exactly one instruction
+                    self.instructions += 1
                 out.append(ui.frame())
             return out
 
