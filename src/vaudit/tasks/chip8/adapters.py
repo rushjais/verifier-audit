@@ -347,6 +347,96 @@ class islay_adapter:
             return out
 
 
+@dataclass
+class robertolaru_adapter:
+    """robertolaru/chip8py. CPU() with cycle() and a flat bytearray display."""
+
+    root: Path
+    name: str = "robertolaru"
+    quirks: dict = field(default_factory=dict)
+    instructions: int = 0
+
+    def frames(self, rom: bytes, count: int) -> list[Frame]:
+        _stub_pygame()
+        with _isolated(self.root, "cpu", "constants", "main"):
+            from cpu import CPU
+
+            machine = CPU()
+            machine.load_bin(rom)
+            machine.pc = 0x200  # their __init__ leaves pc at 0; the front-end sets it
+
+            self.instructions = 0
+            out: list[Frame] = []
+            for _ in range(count):
+                for _ in range(CYCLES_PER_FRAME):
+                    machine.cycle()
+                    self.instructions += 1
+                out.append(bytes(1 if p else 0 for p in machine.display))
+            return out
+
+
+@dataclass
+class cwithmichael_adapter:
+    """cwithmichael/chip8_py. Cpu() with reset() then cycle(); gfx is a flat list of bools."""
+
+    root: Path
+    name: str = "cwithmichael"
+    quirks: dict = field(default_factory=dict)
+    instructions: int = 0
+
+    def frames(self, rom: bytes, count: int) -> list[Frame]:
+        _stub_pygame()
+        with _isolated(self.root, "cpu", "chip8", "main"):
+            from cpu import Cpu
+
+            machine = Cpu()
+            machine.reset()  # sets pc=0x200 and loads the fontset; the constructor does neither
+            for offset, byte in enumerate(rom):
+                machine.memory[0x200 + offset] = byte
+
+            self.instructions = 0
+            out: list[Frame] = []
+            for _ in range(count):
+                for _ in range(CYCLES_PER_FRAME):
+                    machine.cycle()
+                    self.instructions += 1
+                out.append(bytes(1 if p else 0 for p in machine.gfx))
+            return out
+
+
+@dataclass
+class rudzen_adapter:
+    """rudzen/Chip8Py. A Chip8 state dataclass driven by static Cpu.load_program/step.
+
+    Their step() consults time.time() to pace 60Hz timer updates, so timer behaviour depends on
+    wall clock. No ROM in the study is timer-dependent (Amendment 2 rule 3 excludes those), and
+    the determinism test covers the rest.
+    """
+
+    root: Path
+    name: str = "rudzen"
+    quirks: dict = field(default_factory=dict)
+    instructions: int = 0
+
+    def frames(self, rom: bytes, count: int) -> list[Frame]:
+        with _isolated(self.root, "cpu", "chip8", "common", "sdl_wrapper", "main"):
+            from chip8 import Chip8
+            from cpu import Cpu
+
+            state = Chip8()
+            Cpu.load_program(state, list(rom))
+            cpu = Cpu()
+
+            self.instructions = 0
+            out: list[Frame] = []
+            for _ in range(count):
+                for _ in range(CYCLES_PER_FRAME):
+                    cpu.step(state, CYCLES_PER_FRAME)
+                    self.instructions += 1
+                out.append(bytes(1 if p else 0 for p in state.gfx))
+            return out
+
+
 def _from_rows(rows) -> Frame:
     """Flatten a row-major 2D buffer into the flat frame the metrics compare."""
     pixels = bytearray(WIDTH * HEIGHT)
@@ -359,7 +449,10 @@ def _from_rows(rows) -> Frame:
 ADAPTERS = {
     "craigthomas_adapter": craigthomas_adapter,
     "debugloop_adapter": debugloop_adapter,
+    "cwithmichael_adapter": cwithmichael_adapter,
     "islay_adapter": islay_adapter,
+    "robertolaru_adapter": robertolaru_adapter,
+    "rudzen_adapter": rudzen_adapter,
     "wyattferguson_adapter": wyattferguson_adapter,
 }
 

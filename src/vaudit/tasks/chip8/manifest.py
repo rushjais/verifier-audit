@@ -99,6 +99,34 @@ POPULATION: tuple[Entry, ...] = (
         ),
     ),
     Entry(
+        key="robertolaru",
+        repo="robertolaru/chip8py",
+        commit="702bced328eabcd5052ea228c32e85f7c4413b61",
+        licence="MIT",
+        adapter="robertolaru_adapter",
+        notes="CPU() with cycle() and a flat bytearray display; loads its own font. Their "
+        "__init__ leaves pc at 0, so the adapter sets 0x200 as their front-end does.",
+    ),
+    Entry(
+        key="cwithmichael",
+        repo="cwithmichael/chip8_py",
+        commit="f52412f2ed4f9f8b85e7255f42f4cbcfc4c5cfbb",
+        licence="MIT",
+        adapter="cwithmichael_adapter",
+        notes="Cpu() then reset(), which sets pc=0x200 and loads the fontset — the constructor "
+        "does neither. gfx is a flat list of bools.",
+    ),
+    Entry(
+        key="rudzen",
+        repo="rudzen/Chip8Py",
+        commit="8df582cdae2d7444e9d8c1e37a8f55854c9cb43c",
+        licence="MIT",
+        adapter="rudzen_adapter",
+        notes="A Chip8 state dataclass driven by static Cpu.load_program/step. step() consults "
+        "time.time() to pace 60Hz timer updates, so its timer behaviour is wall-clock "
+        "dependent; no ROM in the study is timer-dependent and determinism is tested.",
+    ),
+    Entry(
         key="debugloop",
         repo="debugloop/chip8",
         commit="ce22f0716a96b9eabc94961fbfdab17a59f595db",

@@ -42,6 +42,7 @@ class Rom:
     usable: bool = True
     timer_dependent: bool = False  # Amendment 2 rule 3: excluded from the study
     self_verifying: bool = False  # renders its own pass/fail marks
+    needs_input: bool = False  # requires live key presses this harness never delivers
 
     @property
     def path(self) -> Path:
@@ -100,6 +101,7 @@ ROMS: tuple[Rom, ...] = (
         usable=False,
         timer_dependent=True,
         self_verifying=True,
+        needs_input=True,
     ),
 )
 
@@ -119,6 +121,11 @@ def report() -> str:
     lines = [f"roms: {SUITE_REPO} @ {SUITE_COMMIT[:8]} ({SUITE_LICENCE}, fetched, not vendored)"]
     for rom in ROMS:
         state = "present" if rom.available else "not fetched"
-        note = "" if rom.usable else "  EXCLUDED: needs live input"
+        reasons = []
+        if rom.needs_input:
+            reasons.append("needs live input")
+        if rom.timer_dependent:
+            reasons.append("timer-dependent")
+        note = "" if rom.usable else "  EXCLUDED: " + ", ".join(reasons or ["unusable"])
         lines.append(f"  {rom.key:<12} {rom.role:<13} {state:<12}{note}")
     return "\n".join(lines)
