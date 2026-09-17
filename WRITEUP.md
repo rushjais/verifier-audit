@@ -6,7 +6,7 @@
 > same verdict twice, and tests only what it told the candidate — not just whether it can be
 > cheated. It produced four modest numbers and one negative result: the headline study, comparing
 > five grading strategies on real third-party CHIP-8 interpreters, could not be run, for three
-> reasons each measured rather than guessed. The most useful section is §7 — fourteen times during
+> reasons each measured rather than guessed. The most useful section is §7 — fifteen times during
 > construction a measurement here was confidently about something other than what it claimed.
 
 **Authorship.** Built with Claude Code. I set the direction, made the scoping calls, reviewed the
@@ -85,12 +85,20 @@ that doing so reduces "the pass@k by up-to 19.3-28.9%". Measured against that, t
 mutants is a small echo of a known and much larger effect. The contribution is not the finding but
 the mechanism: produced automatically, per grader, for **$0**, because mutants need no model calls.
 
-### 3.2 Null result: hardening cost nothing
+### 3.2 Null result: hardening cost nothing — *not reproducible in this repository*
 
 `honest_pass` delta from grader to hardened grader was **0.00 on all five tasks** — zero
 verified-correct solutions rejected. Recorded, not dropped. Credible only because diversity held:
 16–20 structurally distinct solution shapes out of 20 per task, measured by AST fingerprint with
 names erased. A null over a homogeneous population would mean nothing.
+
+**This is the one result here with no reproduce path.** The hardening track was deliberately
+dropped in the clean-room rewrite — its patch template was my former teammates' code, and the
+result was null — so the sweep that ships with this repository has no hardened column and cannot
+produce this number. It stands as a result from the predecessor repository only. Re-adding a
+hardening step of my own would make it reproducible and would also make it close to tautological:
+hardening with extra cases derived from the reference cannot reject a correct solution, so the
+null would be built into the construction rather than measured.
 
 ### 3.3 A differential grader rejected five of six spec-faithful implementations
 
@@ -194,9 +202,9 @@ same party that would write the metrics.
 
 ---
 
-## 7. Fourteen measurements that were about the wrong thing
+## 7. Fifteen measurements that were about the wrong thing
 
-Assembled while building an instrument to detect exactly this. **Twelve were introduced by the
+Assembled while building an instrument to detect exactly this. **Thirteen were introduced by the
 model during this work** (marked ▲); #1 was in the original hackathon code, which all three of us
 wrote; #2 is a property of git that nobody introduced and nobody noticed.
 
@@ -216,6 +224,7 @@ wrote; #2 is a property of git that nobody introduced and nobody noticed.
 | 12 ▲ | "all checks passed" | `ruff check` is lint only; `make check` also runs `ruff format --check`, which was failing | running the documented reproduce command from a clean clone |
 | 13 ▲ | quoted third-party source was verbatim | `ruff format` rewrote the quotes (`0xff` → `0xFF`) in evidence cited against those projects | reading the diff the formatter produced |
 | 14 ▲ | "`make check` — 155 tests" | in the documented order it is 111 passed, 14 skipped; the population has to be fetched first | running the steps as written, in the order written |
+| 15 ▲ | "the sweep command reproduces §3.1 and §3.2 here" | true of §3.1, false of §3.2 — the clean-room rewrite dropped the hardening track, so this repo cannot produce that number at all | checking what the shipped sweep actually measures before running it |
 
 #12, #13 and #14 were found by running §9's commands from a clean clone, which is why that is now part
 of the procedure rather than an assumption. #13 is the sharpest of the set: a tool whose job is
@@ -268,10 +277,11 @@ was failing on the format step while `ruff check` alone reported success. Steps 
 pass from a fresh clone with no API key and no pre-existing `.population`. Step 4 was run as a
 dry run only; it prints the estimate and buys nothing.
 
-Two caveats. `.githooks` is not active in a fresh clone — `git config core.hooksPath .githooks`
+Three caveats. §3.2 has no reproduce path in this repository at all (see that section);
+`.githooks` is not active in a fresh clone — `git config core.hooksPath .githooks`
 is required, and that is incident #2. And §3.1/§3.2 were produced in the predecessor repository
-before the clean-room rewrite; the sweep command reproduces them here but regenerates the solution
-population, at roughly $0.35.
+before the clean-room rewrite. The sweep reproduces **§3.1 only**, and regenerates the solution
+population to do it, at roughly $0.35.
 
 ## 10. External claims, for checking
 
