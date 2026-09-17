@@ -1,68 +1,127 @@
-# Is this grader fair?
+# Sixteen measurements that were about the wrong thing
 
 **Last updated 2026-09-17.** Numbers reproduce from this repository; commands in §9.
 
-> **TL;DR.** Built an instrument that measures whether a grader accepts correct work, returns the
-> same verdict twice, and tests only what it told the candidate — not just whether it can be
-> cheated. Its sharpest result: on an authored 16-byte ROM isolating one documented CHIP-8 quirk,
-> **pixel proportion, SSIM and GMSD all rank a blank screen above a correct implementation** that
-> differs only on that quirk — and the failure is invisible when measured against a single
-> reference. §7 is the other half: sixteen times during construction a measurement here was
-> confidently about something other than what it claimed.
+> **TL;DR.** I set out to build an instrument that detects when a grader is unfair rather than
+> merely gameable. The instrument works, and everything it measured turned out to be a replication
+> of established results — the literature search in `LITERATURE.md` is unsparing about that. What
+> the project produced that is not a replication is **a first-person record of sixteen occasions,
+> inside one small project, where a measurement was confidently about something other than what it
+> claimed**. Fourteen were introduced by the model doing the work. None was caught by the thing
+> that broke. They fall into four patterns, and each pattern has a direct analogue in building RL
+> graders — which is the argument this document is actually making.
 
 **Authorship.** Built with Claude Code. I set the direction, made the scoping calls, reviewed the
-output, and pushed back on it — including the two eligibility amendments and the decision not to
-weaken the correctness bar a second time. The code and most of the prose were written by the
-model under that direction. §7 records who introduced each defect.
+output, and pushed back on it — including the eligibility amendments, the decision not to weaken
+the correctness bar, and the literature search that cost the project its novelty claims. The code
+and most of the prose were written by the model under that direction. §2 records who introduced
+each defect.
 
 ---
 
-## 1. Standing conclusion
+## 1. Why this is the finding
 
-**A verifier can be un-gameable and still be wrong, and the second failure is invisible in any
-single run.** Robustness tooling exists. The other properties — does it accept correct work, does
-it agree with itself, does it test only what the prompt made knowable — *are* checked today, but by
-hand, per benchmark, once, by people who then move on.
+The project was an instrument for catching graders that are confidently wrong — that reject
+correct work, disagree with themselves, or test what the prompt never made knowable. While
+building it, the project committed that error sixteen times.
 
-The clearest precedent is **SWE-bench Verified**, and it is worth stating how exactly it matches.
-OpenAI "launched a human annotation campaign with professional software developers to screen each
-sample of the SWE-bench test set for appropriately scoped unit tests and well-specified issue
-descriptions", working with **93 developers** over **1,699 samples** to produce a verified set of
-**500**. Their two annotation criteria were:
+That is not irony for its own sake. It is the closest thing to data this document has, because
+the failures were **recorded as they happened, with their causes traced, by someone who was
+specifically looking for that class of failure and still missed every one at the moment it
+occurred.** Retrospective bug lists do not have that property; they are assembled by people who
+already know the answer.
 
-> Whether we consider the issue description to be underspecified and hence unfair to be testing on.
->
-> Whether the FAIL_TO_PASS unit tests filter out valid solutions.
+Four things make the record worth more than the results it accompanies:
 
-Those are `4c` and `4a`. The problem is understood and the criteria are settled; what is missing
-is a version that does not cost 93 people and cannot be re-run when a grader changes. That is the
-gap this instrument aims at, and the honest framing of its contribution.
+1. **Every incident has a traced cause**, not a symptom. §2 and Appendix A give the line.
+2. **None was caught by the thing that broke.** The tracebacks that did fire came from tests
+   written days earlier for unrelated purposes.
+3. **Each pattern maps onto a way real graders fail.** Pattern A is the acceptance test that never
+   runs in production. Pattern C is harness misconfiguration read as a model's failure — the
+   single most expensive mistake available to a task designer, because it makes a fair task look
+   unfair and an unfair one look fine. Pattern B is a rate reported over the wrong population.
+4. **The project's own checks caught only a minority of them.** Reading output that looked wrong
+   caught more than any test did.
 
-**Read `LITERATURE.md` first.** The search `BRIEF.md` promised was done on 2026-09-17 and it went
-badly for the novelty claims. `catch_rate` is the **mutation score**, a test-adequacy metric from
-1977 with 390+ publications catalogued by 2009, and its equivalent-mutant filter is a known
-NP-complete problem. `honest_pass` is measured in the autograding literature, which reports
-**56–64% false-negative rates** and names the exact mechanism §3.3 demonstrates. And SSIM's
-sensitivity to spatial translation — the whole basis of §3.6 — is a documented drawback with a
-purpose-built fix, **CW-SSIM** (Wang and Simoncelli, 2005).
-
-None of the four checks is novel. What survives is in `LITERATURE.md` § What survives, and the
-most original section of this document is §7, not §3.
-
-**The sharpest result is §3.6.** On a 16-byte ROM isolating one documented CHIP-8 quirk, three of
-the five grading strategies GBA Eval worked through — pixel proportion, SSIM and GMSD — score a
-**blank screen above a correct implementation** that differs only on that quirk. For SSIM the
-mechanism is mechanical: moving a glyph disturbs two blocks, erasing it disturbs one. And the
-failure is **invisible at n=1**: against a single reference, three of five strategies separate
-cleanly; over a population of seven containing one legitimate variation, none do.
-
-Four further numbers, all modest and all scoped in §3: a mutation catch rate below 1.0 on 2 of 5
-EvalPlus tasks; a null result on hardening; a 1-in-6 honest-pass on an authored replication task;
-and 1 of 7 CHIP-8 interpreters passing a reference suite.
+The results that produced these incidents are in §4, labelled as the replications they are.
 
 ---
 
-## 2. What the instrument measures
+## 2. The sixteen
+
+Assembled while building an instrument to detect exactly this. **Fourteen were introduced by the
+model during this work**; #1 was in the original hackathon code, which three of us wrote; #2 is a
+property of git that nobody introduced and nobody noticed. The full list with causes is
+Appendix A.
+
+### A. The check was not running (#2, #3, #4, #8, #12), and one that was never broken (#16)
+
+The most common failure, and the most dangerous, because an inert check is indistinguishable from
+a passing one. `core.hooksPath` is local git config, so a clone has the hook files and no hook.
+`make check | tail` reports `tail`'s exit status, so a failing gate reads as success. `RLIMIT_AS`
+raised on macOS before any candidate ran, so every exploit scored 0 and every exploit looked
+sealed. Fields were added to a dataclass and the table never updated, so a tightened eligibility
+rule did nothing. `ruff check` was run and reported success while `make check` — a superset — was
+failing.
+
+#16 belongs to this pattern from the outside and to a worse one from the inside. I observed a
+state I did not expect, wrote "cause unestablished" — and then acted on it anyway, reverting a
+deliberate decision by the repository's owner and filing it as a defect. **Recording that the
+cause was unknown did not stop me treating it as known.** The honest lesson is not about stale
+reads: an unexpected state is a question for whoever owns the system, not a fault to be corrected
+by whoever noticed it.
+
+**What distinguishes these: the system was quieter than before, not louder.** Nothing errored.
+A sealed exploit, a green gate and a passing suite all look like progress.
+
+### B. The claim was wider than the thing verified (#1, #11, #14, #15)
+
+"Harness tampering categorically sealed" rested on a test covering file tampering only. A
+hardening test asserted `x == y or x != y`, which cannot fail. "155 tests" was 111 passed and 14
+skipped in the order the document gave. "The sweep reproduces §4.1 and §4.2" was true of one and
+false of the other.
+
+**Each was true of something narrower than its sentence.** None required a bug to produce — only
+a summary written a little ahead of the evidence.
+
+### C. My scaffolding was mistaken for their behaviour (#5, #6, #7, #13)
+
+A `pygame.key` stub returning `{}` where a sequence was required made a working interpreter throw,
+which read as "this implementation crashes on the quirks ROM" and nearly removed it from the
+population. An adapter never called `decrement_timers()`, so timers silently never advanced. One
+adapter built frames from 12 instructions while the rest used 15. `ruff format` rewrote quoted
+third-party source — `0xff` → `0xFF` — inside evidence cited against those projects.
+
+**This is the category the whole study is about**, arrived at from the inside: a misconfigured
+subject and a defective one are indistinguishable from the outside, and the harness is the thing
+most likely to be misconfigured.
+
+### D. The fixture could not show what it was built to show (#9, #10)
+
+A report hardcoded "needs live input" as the exclusion reason for every excluded ROM, so a
+timer-dependent exclusion printed a confident wrong explanation. A `rounded_average` variant
+passed the grader because no visible input produced a repeating average — the fixture could not
+express the difference it existed to demonstrate.
+
+---
+
+**Correcting an earlier draft of this section:** it claimed none was caught by an error message.
+That is false. #4, #5 and #8 surfaced as tracebacks or test failures, and #3 printed an error that
+was displayed and ignored. The accurate claim is narrower: **none was caught by the thing it broke
+failing at the moment it broke.** The tracebacks came from tests written for other purposes, days
+later; the rest came from reading output that looked wrong.
+
+That correction is itself another instance — unnumbered, because it is a claim about the list
+rather than an entry in it — and the reason the section is here.
+
+#12, #13, #14 and #15 were all found in one sitting, by running the documented commands from a
+clean clone and by checking what the shipped code measures before running it. Four of sixteen came
+from an hour of not trusting the documentation — which is the cheapest audit in this document and
+the one with the highest yield.
+
+---
+
+## 3. The instrument
 
     4a  honest_pass  = accepted / |{s : oracle(s) = 1}|      correct work the grader accepts
     4e  catch_rate   = rejected / |{m : oracle(m) = 0}|      broken work the grader rejects
@@ -70,15 +129,29 @@ and 1 of 7 CHIP-8 interpreters passing a reference suite.
     4b′ harness path   does the grader's own test exercise what the rollout exercises
     4c  unknowable     what the grader asserts that the prompt never made derivable
 
-`4a` and `4e` are the same shape: sensitivity and specificity against the oracle. Either is
-trivially maximised alone — accept everything, reject everything — so neither is reported without
-the other. Every number carries the population it was computed over.
+`4a` and `4e` are sensitivity and specificity against the oracle. Either is trivially maximised
+alone — accept everything, reject everything — so neither is reported without the other. Every
+number carries the population it was computed over.
+
+**None of it is novel, and `LITERATURE.md` is the accounting.** `catch_rate` is the **mutation
+score** (1977; 390+ publications catalogued by 2009) and its equivalent-mutant filter is a known
+NP-complete problem. `honest_pass` is measured in the autograding literature, which reports
+**56–64% false-negative rates** and names the mechanism §4.3 demonstrates. `4c`'s two questions
+are verbatim the criteria OpenAI used for SWE-bench Verified with 93 annotators. SSIM's
+sensitivity to translation — the basis of §4.6 — is a documented drawback with a purpose-built
+fix, CW-SSIM (Wang & Simoncelli, 2005).
+
+What has no prior art found for it is the **automated, per-grader combination**: one command
+reporting fairness beside robustness for a specific grader, repeatably, as it changes. That search
+was not exhaustive and `LITERATURE.md` says where it was thin.
 
 ---
 
-## 3. Results
+## 4. What it measured
 
-### 3.1 On 2 of the 5 sparsest-coverage EvalPlus tasks, the base grader misses synthetic bugs
+Replications, except where noted. Each is scoped to what its sample supports.
+
+### 4.1 On 2 of the 5 sparsest-coverage EvalPlus tasks, the base grader misses synthetic bugs
 
 `catch_rate = rejected / |{m in mutants : oracle(m) = 0}|`. Mutants are **synthetic**: single-point
 AST edits of the reference (comparison swaps, arithmetic swaps, boolean swaps, constant bumps),
@@ -113,7 +186,7 @@ to match.
 | verified (of 20) | 19, 20, 17, 19, 18 | 19, 20, **16**, **18**, 18 | two tasks had one more solution fail the oracle |
 
 The population-dependent columns moved by one in four places; the measured columns did not move at
-all. §3.2's number is **not** in this comparison because it cannot be produced here at all — see
+all. §4.2's number is **not** in this comparison because it cannot be produced here at all — see
 that section.
 
 **The denominators are small — 8 and 4.** "0.75" is three mutants out of four. Read as counts, the
@@ -129,7 +202,7 @@ that doing so reduces "the pass@k by up-to 19.3-28.9%". Measured against that, t
 mutants is a small echo of a known and much larger effect. The contribution is not the finding but
 the mechanism: produced automatically, per grader, for **$0**, because mutants need no model calls.
 
-### 3.2 Null result: hardening cost nothing — *not reproducible in this repository*
+### 4.2 Null result: hardening cost nothing — *not reproducible in this repository*
 
 `honest_pass` delta from grader to hardened grader was **0.00 on all five tasks** — zero
 verified-correct solutions rejected. Recorded, not dropped. Credible only because diversity held:
@@ -146,7 +219,7 @@ hardening step of my own would make it reproducible and would also make it close
 hardening with extra cases derived from the reference cannot reject a correct solution, so the
 null would be built into the construction rather than measured.
 
-### 3.3 A differential grader rejected five of six spec-faithful implementations
+### 4.3 A differential grader rejected five of six spec-faithful implementations
 
 `honest_pass = accepted / |{s in 6 proposed : oracle(s) = 1}| = 1/6 = 0.17`
 
@@ -158,7 +231,7 @@ Every rejection traces to one of those four.
 **This is a pilot and the spec gap is authored by me.** It shows the instrument detects what it was
 built to detect. It is not evidence about differential graders in the wild.
 
-### 3.4 The hackathon project's headline result had a hole
+### 4.4 The hackathon project's headline result had a hole
 
 This continues **Goodhart**, a two-day hackathon project by Advay Monga, rayan-arya and me, which
 placed 9th of 71. The verifier core was Advay's and rayan's work; mine was the frontend. It sealed
@@ -172,12 +245,12 @@ test_cases._eq = lambda a, b: True                       # neuter the comparison
 ```
 
 **Verifying the zeroes are real.** A score of 0 can mean "blocked" or "nothing ran" — incident #4
-in §7 is exactly that failure. These are blocked: `tests/test_isolation.py` asserts each exploit
+in §2 is exactly that failure. These are blocked: `tests/test_isolation.py` asserts each exploit
 scores **1** against a reconstruction of the old design, in the same sandbox, in the same run,
 before asserting 0 against the fix; and `test_hardening_did_not_cost_the_gold_solution` asserts the
 gold scores 1 under the fix. A sandbox that failed to start would fail all three.
 
-### 3.5 One of seven CHIP-8 interpreters passes the reference suite
+### 4.5 One of seven CHIP-8 interpreters passes the reference suite
 
 | interpreter | failures | cause, at the pinned commit |
 | --- | --- | --- |
@@ -197,7 +270,7 @@ now traced to a line in their own source (`ADAPTERS.md`).
 What this supports is narrow: **when choosing a reference implementation for differential grading,
 correctness cannot be assumed from the fact that something is a working, published interpreter.**
 
-### 3.6 SSIM ranks a blank screen above a correct implementation — when the divergence *moves* something
+### 4.6 SSIM ranks a blank screen above a correct implementation — when the divergence *moves* something
 
 The study §4 previously said could not be run. It runs on one ROM.
 
@@ -251,7 +324,7 @@ similarity for an image wrong in every pixel. Explainable, reproducible, and fat
 
 ROM B (`digit.ch8`, 34 bytes, same four gates) isolates the `FX55`/`FX65` index quirk and draws a
 **different digit in the same place** — `3` or `0`, both 14 lit pixels at (0,0). ROM A relocates a
-glyph; ROM B substitutes one. Prediction 14 was registered before running it: if §3.6's mechanism
+glyph; ROM B substitutes one. Prediction 14 was registered before running it: if §4.6's mechanism
 is right, SSIM should treat ROM B's divergence more favourably, because it disturbs one block
 rather than two.
 
@@ -289,7 +362,7 @@ it. **Thresholded at τ=.05** accepts the blank screen on both ROMs and so never
 
 #### Displacement magnitude: the score tracks block count, not distance
 
-Amendment 6 registered Prediction 15 before this family existed: if §3.6's mechanism is right,
+Amendment 6 registered Prediction 15 before this family existed: if §4.6's mechanism is right,
 SSIM should **not** degrade monotonically with distance, because what matters is how many blocks
 the two glyph positions touch.
 
@@ -387,7 +460,7 @@ evidence for it.
 named that possibility before the run; they are excluded from separation and reported, not
 replaced with cheats chosen after seeing the numbers.
 
-### 3.7 Prediction scorecard
+### 4.7 Prediction scorecard
 
 | # | prediction | outcome |
 | --- | --- | --- |
@@ -403,17 +476,17 @@ replaced with cheats chosen after seeing the numbers.
 
 Seven evaluated, five hit, one marginal, one missed. **#13 was registered as one I expected to get wrong**, and
 it is the one that produced the sharper finding. **#14 was registered specifically so that a
-mechanism I had already published in §3.6 could be falsified** — it could have shown the
+mechanism I had already published in §4.6 could be falsified** — it could have shown the
 explanation was wrong while the headline number stood. It did not, and the claim is narrower and
 better for having been put at risk.
 
 ---
 
-## 4. What still could not be run
+## 5. What still could not be run
 
-§3.6 is that comparison, on one authored ROM. What remains blocked, and why — each measured:
+§4.6 is that comparison, on one authored ROM. What remains blocked, and why — each measured:
 
-1. **Correct implementations are rare in this sample.** 1 of 7 (§3.5). A population of one supports
+1. **Correct implementations are rare in this sample.** 1 of 7 (§4.5). A population of one supports
    neither `honest_pass` over a population nor rotating the reference.
 2. **The only quirk-exercising ROM is timer-dependent.** `5-quirks.ch8` reads its delay timer in a
    frames-per-second detection loop to test the display-wait quirk. This population disagrees about
@@ -427,14 +500,14 @@ better for having been put at risk.
    game that depends on a quirk would very likely show the difference, and that is untested.
 
 **Prediction 9 is unrun** and stands pre-registered and unresolved rather than dropped; 10–13
-were evaluated in §3.7. The
+were evaluated in §4.7. The
 eligibility rule was amended twice, both before any metric existed, both recorded with reasoning —
 including that Amendment 1 was made *after* the strict rule returned an unusable answer, by the
 same party that would write the metrics.
 
 ---
 
-## 5. Rejected hypotheses — do not re-test
+## 6. Rejected hypotheses — do not re-test
 
 1. **Hardening over-tightens EvalPlus graders.** No. Delta 0.00 across 5 tasks.
 2. **`honest_pass` on stock EvalPlus is informative.** No — the oracle is a strict superset of the
@@ -449,95 +522,24 @@ same party that would write the metrics.
 8. **A grading strategy can be evaluated against a single reference.** No. Three of five separate
    cleanly at n=1 and none do at n=7; the reference-only evaluation says nothing.
 
-## 6. Limitations
+## 7. Limitations
 
-- §3.1 denominators are 4–8 mutants per task, capped; n=5 tasks. §3.3 is a pilot on an authored
-  task. §3.5 is a convenience sample of seven.
+- §4.1 denominators are 4–8 mutants per task, capped; n=5 tasks. §4.3 is a pilot on an authored
+  task. §4.5 is a convenience sample of seven.
 - Timer semantics are **not** normalised across the CHIP-8 population and cannot be without
   rewriting those projects.
 - `4c` ran only as a hand-verified pilot; `4b′` is an instrumentation helper plus a checklist
   demonstrated on two graders, not a generic checker.
 - Games were never tried as quirk-exercising ROMs (§4.3).
-- §3.6 runs on **one authored 16-byte ROM** and one quirk, with a 14-pixel glyph on a 64×32
+- §4.6 runs on **one authored 16-byte ROM** and one quirk, with a 14-pixel glyph on a 64×32
   monochrome display. GBA Eval's frames are 240×160 and in colour, where the same displacement
   disturbs a different fraction of the image. The finding is that the regime exists and is
   reachable by a legitimate quirk difference, not that their grader mis-ranks their submissions.
-- §3.6 covers two divergence *kinds* (relocation, substitution) on one quirk each. It does not
+- §4.6 covers two divergence *kinds* (relocation, substitution) on one quirk each. It does not
   vary magnitude within a kind — a two-pixel or twenty-pixel shift is untested — nor does it test
   more than one quirk per kind.
 
 ---
-
-## 7. Sixteen measurements that were about the wrong thing
-
-Assembled while building an instrument to detect exactly this. **Fourteen were introduced by the
-model during this work**; #1 was in the original hackathon code, which all three of us wrote; #2
-is a property of git that nobody introduced and nobody noticed. The full list is Appendix A; what
-matters is that they fall into four patterns, and the patterns are the finding.
-
-### A. The check was not running (#2, #3, #4, #8, #12), and one that was never broken (#16)
-
-The most common failure, and the most dangerous, because an inert check is indistinguishable from
-a passing one. `core.hooksPath` is local git config, so a clone has the hook files and no hook.
-`make check | tail` reports `tail`'s exit status, so a failing gate reads as success. `RLIMIT_AS`
-raised on macOS before any candidate ran, so every exploit scored 0 and every exploit looked
-sealed. Fields were added to a dataclass and the table never updated, so a tightened eligibility
-rule did nothing. `ruff check` was run and reported success while `make check` — a superset — was
-failing.
-
-#16 belongs to this pattern from the outside and to a worse one from the inside. I observed a
-state I did not expect, wrote "cause unestablished" — and then acted on it anyway, reverting a
-deliberate decision by the repository's owner and filing it as a defect. **Recording that the
-cause was unknown did not stop me treating it as known.** The honest lesson is not about stale
-reads: an unexpected state is a question for whoever owns the system, not a fault to be corrected
-by whoever noticed it.
-
-**What distinguishes these: the system was quieter than before, not louder.** Nothing errored.
-A sealed exploit, a green gate and a passing suite all look like progress.
-
-### B. The claim was wider than the thing verified (#1, #11, #14, #15)
-
-"Harness tampering categorically sealed" rested on a test covering file tampering only. A
-hardening test asserted `x == y or x != y`, which cannot fail. "155 tests" was 111 passed and 14
-skipped in the order the document gave. "The sweep reproduces §3.1 and §3.2" was true of one and
-false of the other.
-
-**Each was true of something narrower than its sentence.** None required a bug to produce — only
-a summary written a little ahead of the evidence.
-
-### C. My scaffolding was mistaken for their behaviour (#5, #6, #7, #13)
-
-A `pygame.key` stub returning `{}` where a sequence was required made a working interpreter throw,
-which read as "this implementation crashes on the quirks ROM" and nearly removed it from the
-population. An adapter never called `decrement_timers()`, so timers silently never advanced. One
-adapter built frames from 12 instructions while the rest used 15. `ruff format` rewrote quoted
-third-party source — `0xff` → `0xFF` — inside evidence cited against those projects.
-
-**This is the category the whole study is about**, arrived at from the inside: a misconfigured
-subject and a defective one are indistinguishable from the outside, and the harness is the thing
-most likely to be misconfigured.
-
-### D. The fixture could not show what it was built to show (#9, #10)
-
-A report hardcoded "needs live input" as the exclusion reason for every excluded ROM, so a
-timer-dependent exclusion printed a confident wrong explanation. A `rounded_average` variant
-passed the grader because no visible input produced a repeating average — the fixture could not
-express the difference it existed to demonstrate.
-
----
-
-**Correcting an earlier draft of this section:** it claimed none was caught by an error message.
-That is false. #4, #5 and #8 surfaced as tracebacks or test failures, and #3 printed an error that
-was displayed and ignored. The accurate claim is narrower: **none was caught by the thing it broke
-failing at the moment it broke.** The tracebacks came from tests written for other purposes, days
-later; the rest came from reading output that looked wrong.
-
-That correction is itself the sixteenth instance, and the reason the section is here.
-
-#12, #13, #14 and #15 were all found in one sitting, by running the documented commands from a
-clean clone and by checking what the shipped code measures before running it. Four of fifteen came
-from an hour of not trusting the documentation — which is the cheapest audit in this document and
-the one with the highest yield.
 
 ## 8. What would make this a real study
 
@@ -574,12 +576,12 @@ was failing on the format step while `ruff check` alone reported success. Steps 
 pass from a fresh clone with no API key and no pre-existing `.population`. Step 4 was run as a
 dry run only; it prints the estimate and buys nothing.
 
-Three caveats. §3.2 has no reproduce path in this repository at all (see that section);
+Three caveats. §4.2 has no reproduce path in this repository at all (see that section);
 `.githooks` is not active in a fresh clone — `git config core.hooksPath .githooks`
-is required, and that is incident #2. And §3.1/§3.2 were produced in the predecessor repository
-before the clean-room rewrite. §3.1 has since been regenerated **in this repository**
+is required, and that is incident #2. And §4.1/§4.2 were produced in the predecessor repository
+before the clean-room rewrite. §4.1 has since been regenerated **in this repository**
 (2026-09-17) and its population is committed under `data/solutions/`, so it now reproduces with no
-API calls. §3.2 remains predecessor-only.
+API calls. §4.2 remains predecessor-only.
 
 ## 10. External claims, for checking
 
@@ -619,7 +621,7 @@ both hold, and both turned out stronger than the draft claimed.
 | 13 ▲ | quoted third-party source was verbatim | `ruff format` rewrote the quotes (`0xff` → `0xFF`) in evidence cited against those projects | reading the diff the formatter produced |
 | 14 ▲ | "`make check` — 155 tests" | in the documented order it is 111 passed, 14 skipped; the population has to be fetched first | running the steps as written, in the order written |
 | 16 ▲ | "the repository flipped to public on its own — an incident" | it did not. The owner made it public, deliberately, using an option I had offered them. I recorded a defect that never existed and then reverted their decision | the owner said so |
-| 15 ▲ | "the sweep command reproduces §3.1 and §3.2 here" | true of §3.1, false of §3.2 — the clean-room rewrite dropped the hardening track, so this repo cannot produce that number at all | checking what the shipped sweep actually measures before running it |
+| 15 ▲ | "the sweep command reproduces §4.1 and §4.2 here" | true of §4.1, false of §4.2 — the clean-room rewrite dropped the hardening track, so this repo cannot produce that number at all | checking what the shipped sweep actually measures before running it |
 
 #12, #13 and #14 were found by running §9's commands from a clean clone, which is why that is now part
 of the procedure rather than an assumption. #13 is the sharpest of the set: a tool whose job is

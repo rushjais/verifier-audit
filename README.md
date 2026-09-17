@@ -1,6 +1,15 @@
 # vaudit
 
-**Is this grader fair and deterministic, or only un-gameable?**
+**An instrument for auditing graders, and a record of it failing at its own job sixteen times.**
+
+The tooling measures whether a grader accepts correct work, agrees with itself, and tests only
+what it told the candidate. It works. Everything it measured turned out to replicate established
+results — `LITERATURE.md` is unsparing about that.
+
+What the project produced that is not a replication is `WRITEUP.md` §2: sixteen occasions inside
+one small project where a measurement was confidently about something other than what it claimed,
+each with a traced cause, none caught by the thing that broke. Four patterns, each with a direct
+analogue in building RL graders. Start there.
 
 A verifier used for RL or evaluation has to do three things: reject every cheat, accept every
 legitimate solution, and return the same verdict twice. Tooling exists for the first. This
