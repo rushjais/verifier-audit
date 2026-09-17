@@ -89,3 +89,31 @@ def test_the_population_is_reported_honestly_not_padded():
     """n is whatever it is. Quirk profiles of my own reference are NOT population members."""
     assert len(_fetched) == len(usable_population())
     assert all(not e.key.startswith("cheat") for e in _fetched)
+
+
+@needs_population
+def test_adapters_leave_no_modules_or_path_behind():
+    """Several of these projects ship a top-level package called `chip8`."""
+    import sys
+
+    before_path = list(sys.path)
+    for entry in _fetched:
+        build(entry, path_for(entry)).frames(DRAW_ZERO, 1)
+        leaked = [m for m in ("chip8", "emu", "ui") if m in sys.modules]
+        assert not leaked, f"{entry.key} left {leaked} in sys.modules"
+    assert sys.path == before_path
+
+
+@needs_population
+@pytest.mark.skipif(len(_fetched) < 2, reason="needs two interpreters to interleave")
+def test_running_one_interpreter_cannot_change_another_s_output():
+    """The failure this guards against is silent and total: if importing one project hands
+    another its code, two implementations agree perfectly because they ARE the same code —
+    honest_pass reads 1.00 and the study concludes the opposite of the truth."""
+    first, second = _fetched[0], _fetched[1]
+
+    alone = build(first, path_for(first)).frames(DRAW_ZERO, 3)
+    build(second, path_for(second)).frames(DRAW_ZERO, 3)
+    after = build(first, path_for(first)).frames(DRAW_ZERO, 3)
+
+    assert alone == after, f"{second.key} changed what {first.key} produced"

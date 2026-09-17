@@ -71,6 +71,61 @@ POPULATION: tuple[Entry, ...] = (
             "portable, so test ROMs here use FX29."
         ),
     ),
+    Entry(
+        key="wyattferguson",
+        repo="wyattferguson/chip8-emulator",
+        commit="d62e55dc92ce26f211d9a85d40fc34fa13c6978c",
+        licence="MIT",
+        adapter="wyattferguson_adapter",
+        notes=(
+            "CPU(ram, screen, keypad, audio) with cycle(), which is already one tick's worth of "
+            "instructions. The adapter uses THEIR Screen rather than a stand-in: flip_pixel "
+            "contains their wrap decision, and substituting my own framebuffer would quietly "
+            "replace their behaviour with mine. RAM loads from a path, so the ROM is written to "
+            "a temp file. Font is loaded into the first 80 bytes by RAM itself."
+        ),
+    ),
+    Entry(
+        key="debugloop",
+        repo="debugloop/chip8",
+        commit="ce22f0716a96b9eabc94961fbfdab17a59f595db",
+        licence="MIT",
+        adapter="debugloop_adapter",
+        notes=(
+            "Chip8(filename, ui) with cycle(). No pygame at all — curses lives in ui.py, which "
+            "is never imported. The UI is the display: it stores lit pixels as an unbounded set "
+            "of (x, y) and draw_sprite neither wraps nor clips, so the stub keeps the set "
+            "unbounded and bounds only at frame capture, matching their screen_redraw. Their "
+            "collision detection reads that same unbounded set, so imposing wrapping in the stub "
+            "would change behaviour they did not write."
+        ),
+    ),
+)
+
+
+# Examined and NOT included. Recorded so the population's size is a fact rather than an
+# impression, and so nobody repeats the work.
+REJECTED: tuple[tuple[str, str], ...] = (
+    (
+        "shivrm/chip8",
+        "MIT, and the CPU is clean, but CPU.__init__ ends by calling loop(), an infinite "
+        "while-True. Driving it would mean reimplementing their fetch/increment/terminate logic "
+        "outside their class — reimplementation rather than glue, and any 'difference' it then "
+        "showed would be partly mine.",
+    ),
+    (
+        "AlpacaMax/Python-CHIP8-Emulator",
+        "MIT, but a single script with the interpreter and the pygame event loop interleaved; no "
+        "seam to drive without editing their file.",
+    ),
+    (
+        "Dhole/chip8-rs",
+        "GPL-3.0. Excluded on licence before adaptability was considered.",
+    ),
+    (
+        "henriquebastos/chipy8",
+        "BSD-4-Clause, which carries the advertising clause and is not on the permissive list.",
+    ),
 )
 
 
@@ -81,7 +136,10 @@ def usable_population() -> tuple[Entry, ...]:
 def report() -> str:
     """What the population actually is right now, including what is missing. Printed in the
     writeup verbatim — an overstated n is the easiest way to make this study a lie."""
-    lines = [f"population: {len(usable_population())} usable of {len(POPULATION)} listed"]
+    lines = [
+        f"population: {len(usable_population())} usable of {len(POPULATION)} listed, "
+        f"{len(REJECTED)} examined and rejected"
+    ]
     for entry in POPULATION:
         blockers = []
         if not entry.permissive:
@@ -90,4 +148,6 @@ def report() -> str:
             blockers.append("commit not pinned")
         status = "usable" if entry.usable else "BLOCKED: " + ", ".join(blockers)
         lines.append(f"  {entry.key:<16} {entry.repo:<34} {entry.licence:<12} {status}")
+    lines.append("rejected:")
+    lines += [f"  {repo:<34} {why}" for repo, why in REJECTED]
     return "\n".join(lines)
