@@ -6,7 +6,7 @@ still has an artifact behind it rather than only a sentence.
 
 ## `m1a_sweep.json`
 
-The run behind WRITEUP §3.2 (the hardening null). Its `honest_pass_stock` and
+The run behind WRITEUP §4.2 (the hardening null). Its `honest_pass_stock` and
 `honest_pass_hardened` columns are 1.0 on all five tasks — delta 0.00.
 
 The hardening track was dropped in the clean-room rewrite: its patch template was my former
@@ -16,4 +16,4 @@ solution. So this file is evidence of what was measured, not something this repo
 reproduce. Treat it accordingly.
 
 Its `catch_rate_stock` column (0.625, 1.0, 1.0, 0.75, 1.0) is the predecessor half of the
-comparison table in §3.1, and *that* half did reproduce here exactly.
+comparison table in §4.1, and *that* half did reproduce here exactly.

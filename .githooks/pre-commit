@@ -1,0 +1,10 @@
+#!/bin/sh
+# Pre-commit gate: format check, lint, tests. Activate with
+#   git config core.hooksPath .githooks
+# core.hooksPath is *local* config, so a fresh clone carries this file and no
+# hook until that command is run. That is incident #2 in WRITEUP.md.
+#
+# Deliberately not piped to anything: `make check | tail` reports tail's exit
+# status, which is incident #3.
+set -e
+make check

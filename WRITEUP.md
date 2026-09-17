@@ -8,8 +8,8 @@
 > the project produced that is not a replication is **a first-person record of sixteen occasions,
 > inside one small project, where a measurement was confidently about something other than what it
 > claimed**. Fourteen were introduced by the model doing the work. None was caught by the thing
-> that broke. They fall into four patterns, and each pattern has a direct analogue in building RL
-> graders — which is the argument this document is actually making.
+> it broke failing at the moment it broke. They fall into four patterns, and each pattern has a
+> direct analogue in building RL graders — which is the argument this document is actually making.
 
 **Authorship.** Built with Claude Code. I set the direction, made the scoping calls, reviewed the
 output, and pushed back on it — including the eligibility amendments, the decision not to weaken
@@ -25,23 +25,25 @@ The project was an instrument for catching graders that are confidently wrong �
 correct work, disagree with themselves, or test what the prompt never made knowable. While
 building it, the project committed that error sixteen times.
 
-That is not irony for its own sake. It is the closest thing to data this document has, because
-the failures were **recorded as they happened, with their causes traced, by someone who was
-specifically looking for that class of failure and still missed every one at the moment it
-occurred.** Retrospective bug lists do not have that property; they are assembled by people who
-already know the answer.
+That is not irony for its own sake. The failures were **recorded as they happened, with their
+causes traced, by someone who was specifically looking for that class of failure and still missed
+every one at the moment it occurred.** Retrospective bug lists do not have that property; they
+are assembled by people who already know the answer.
 
 Four things make the record worth more than the results it accompanies:
 
-1. **Every incident has a traced cause**, not a symptom. §2 and Appendix A give the line.
-2. **None was caught by the thing that broke.** The tracebacks that did fire came from tests
-   written days earlier for unrelated purposes.
+1. **Every incident has a traced cause**, not a symptom — a source line where there is one, and
+   for #2, #14 and #16 a cause that is not a line at all. §2 and Appendix A give them.
+2. **None was caught by the thing it broke failing at the moment it broke.** Three did surface as
+   tracebacks or test failures, but from tests written days earlier for unrelated purposes.
 3. **Each pattern maps onto a way real graders fail.** Pattern A is the acceptance test that never
-   runs in production. Pattern C is harness misconfiguration read as a model's failure — the
-   single most expensive mistake available to a task designer, because it makes a fair task look
-   unfair and an unfair one look fine. Pattern B is a rate reported over the wrong population.
-4. **The project's own checks caught only a minority of them.** Reading output that looked wrong
-   caught more than any test did.
+   runs in production. Pattern C is harness misconfiguration read as a model's failure, which
+   makes a fair task look unfair and an unfair one look fine. Pattern B is a rate reported over
+   the wrong population.
+4. **The project's own checks caught a minority of them.** Appendix A's surfacing column: tests
+   and tracebacks **3** (#4, #5, #8), running a documented command **3** (#3, #12, #14), reading
+   code or output **8**, the repository's owner **1**, an unexpected state **1**. Reading beat
+   testing better than two to one — though half of that reading was of *code*, not output.
 
 The results that produced these incidents are in §4, labelled as the replications they are.
 
@@ -49,15 +51,15 @@ The results that produced these incidents are in §4, labelled as the replicatio
 
 ## 2. The sixteen
 
-Assembled while building an instrument to detect exactly this. **Fourteen were introduced by the
-model during this work**; #1 was in the original hackathon code, which three of us wrote; #2 is a
-property of git that nobody introduced and nobody noticed. The full list with causes is
-Appendix A.
+Assembled while building an instrument for the same class of failure in graders. **Fourteen were
+introduced by the model during this work**; #1 was in the original hackathon code, which three of
+us wrote; #2 is a property of git that nobody introduced and nobody noticed. The full list with
+causes is Appendix A.
 
 ### A. The check was not running (#2, #3, #4, #8, #12), and one that was never broken (#16)
 
-The most common failure, and the most dangerous, because an inert check is indistinguishable from
-a passing one. `core.hooksPath` is local git config, so a clone has the hook files and no hook.
+The most common of the four — six of sixteen — and an inert check is indistinguishable from a
+passing one. `core.hooksPath` is local git config, so a clone has the hook files and no hook.
 `make check | tail` reports `tail`'s exit status, so a failing gate reads as success. `RLIMIT_AS`
 raised on macOS before any candidate ran, so every exploit scored 0 and every exploit looked
 sealed. Fields were added to a dataclass and the table never updated, so a tightened eligibility
@@ -92,9 +94,9 @@ population. An adapter never called `decrement_timers()`, so timers silently nev
 adapter built frames from 12 instructions while the rest used 15. `ruff format` rewrote quoted
 third-party source — `0xff` → `0xFF` — inside evidence cited against those projects.
 
-**This is the category the whole study is about**, arrived at from the inside: a misconfigured
-subject and a defective one are indistinguishable from the outside, and the harness is the thing
-most likely to be misconfigured.
+**This is the category §4.5 and §4.6 are about**, arrived at from the inside: a misconfigured
+subject and a defective one are indistinguishable from the outside, and in all four of these the
+misconfiguration was mine, not theirs.
 
 ### D. The fixture could not show what it was built to show (#9, #10)
 
@@ -116,8 +118,7 @@ rather than an entry in it — and the reason the section is here.
 
 #12, #13, #14 and #15 were all found in one sitting, by running the documented commands from a
 clean clone and by checking what the shipped code measures before running it. Four of sixteen came
-from an hour of not trusting the documentation — which is the cheapest audit in this document and
-the one with the highest yield.
+from an hour of not trusting the documentation — the highest-yield hour in the project.
 
 ---
 
@@ -190,17 +191,21 @@ all. §4.2's number is **not** in this comparison because it cannot be produced 
 that section.
 
 **The denominators are small — 8 and 4.** "0.75" is three mutants out of four. Read as counts, the
-result is: *three missed mutants across five tasks*, on a capped sample of 8 mutants per task. That
-is a demonstration that the check works and finds something, not a measurement of grader strength.
+result is: *four missed mutants out of 33 catchable, across five tasks* — three on HumanEval/81
+and one on HumanEval/75 — on a capped sample of at most 8 mutants per task. That is a
+demonstration that the check works and finds something, not a measurement of grader strength.
 
 This is the **mutation score** from mutation testing (1977), applied to a grader instead of a
 test suite; the filter for behaviourally-identical mutants is the known equivalent-mutant problem.
 It also **replicates the motivation for EvalPlus itself** and does not extend it. EvalPlus exists
 because "test-cases can be limited in both quantity and quality for fully assessing the functional
 correctness of the generated code"; it adds **80×** more tests than original HumanEval and reports
-that doing so reduces "the pass@k by up-to 19.3-28.9%". Measured against that, three missed
-mutants is a small echo of a known and much larger effect. The contribution is not the finding but
-the mechanism: produced automatically, per grader, for **$0**, because mutants need no model calls.
+that doing so reduces "the pass@k by up-to 19.3-28.9%". Measured against that, four missed
+mutants is a small echo of a known and much larger effect. **The automation is not a contribution
+either** — mutation-testing tools have produced this number automatically for test suites since
+the 1980s, and `LITERATURE.md` says so. What §3 claims is narrower: the same number reported
+*beside* `honest_pass` and `flake_rate` for one specific grader, repeatably, as it changes.
+Mutants do at least cost nothing to generate, since they need no model calls.
 
 ### 4.2 Null result: hardening cost nothing — *not reproducible in this repository*
 
@@ -250,9 +255,9 @@ scores **1** against a reconstruction of the old design, in the same sandbox, in
 before asserting 0 against the fix; and `test_hardening_did_not_cost_the_gold_solution` asserts the
 gold scores 1 under the fix. A sandbox that failed to start would fail all three.
 
-### 4.5 One of seven CHIP-8 interpreters passes the reference suite
+### 4.5 One of seven CHIP-8 interpreters fails nothing its peers pass
 
-| interpreter | failures | cause, at the pinned commit |
+| interpreter | failures vs peers | cause, at the pinned commit |
 | --- | --- | --- |
 | craigthomas | **0** | — |
 | wyattferguson | 8 | `cpu.py:157-160` — `% 255` not `% 256`; carry at ≥ 255; VF written before VX |
@@ -262,17 +267,23 @@ gold scores 1 under the fix. A sandbox that failed to start would fail all three
 | cwithmichael | 18 | `cpu.py:172-176` — VF assigned before the sum is stored |
 | debugloop | 18 | `emu.py:112-114` — `& 0xf0000` on an 8-bit add is always 0 |
 
+**What the column counts.** Tests an interpreter fails *that another interpreter passes*
+([`adjudicate.py`](src/vaudit/tasks/chip8/adjudicate.py)). So `craigthomas`'s **0** means nothing
+in this population contradicts it — not that it passes every test in the suite. A test that every
+interpreter fails is evidence against none of them and is not counted here.
+
 Population: seven Python CHIP-8 interpreters found by GitHub search, permissively licensed and
 adaptable to a headless harness. **Not random, not cross-language, not a rate.** All seven produce
-identical output on the quirk-free control, so the adapters run them correctly; every failure is
-now traced to a line in their own source (`ADAPTERS.md`).
+identical output on the quirk-free control, so the adapters run them correctly; and each
+interpreter's failures trace to at least **one** confirmed defect in its own source
+(`ADAPTERS.md`) — one traced cause per interpreter, not an accounting of every individual mark.
 
 What this supports is narrow: **when choosing a reference implementation for differential grading,
 correctness cannot be assumed from the fact that something is a working, published interpreter.**
 
 ### 4.6 SSIM ranks a blank screen above a correct implementation — when the divergence *moves* something
 
-The study §4 previously said could not be run. It runs on one ROM.
+The comparison §5 lists as blocked over a population. It runs here on one authored ROM.
 
 **Setup.** `shift.ch8` (16 bytes, authored, pre-registered in Amendment 3 before the bytes
 existed, accepted against four gates before any strategy touched it). It isolates the `8XY6`
@@ -283,7 +294,8 @@ computed by that shift, so a correct interpreter draws the same 14 pixels at **x
 The seven third-party interpreters produce **two distinct correct frames**, split 2 / 5. Seven
 implementations is not seven data points: on this ROM there are exactly two behaviours, and every
 number below is a comparison between those two frames. Reference is `craigthomas`, the only
-fully-clean member — the Mesen2 analogue.
+member with no peer-contradicted failures — the *role* Mesen2 plays for GBA Eval there, on far
+weaker evidence here.
 
 | candidate | exact | pixel proportion | thresholded τ=.05 | GMSD | SSIM |
 | --- | --- | --- | --- | --- | --- |
@@ -431,8 +443,8 @@ interpreters wrap within the row, two clip at the edge — both defensible — a
 neither. They are excluded from ROM C's correct population, which leaves two behaviours and does
 not change the numbers above, since the clipping group was already the worst correct score.
 
-**ROM C found a defect the reference suite did not.** The only ROM in `chip8-test-suite` covering
-sprite edge behaviour is the quirks ROM, which is timer-dependent and excluded under Amendment 2
+**ROM C found a defect the available suite ROMs did not.** The only ROM in `chip8-test-suite`
+covering sprite edge behaviour is the quirks ROM, which is timer-dependent and excluded under Amendment 2
 rule 3. An authored ROM built to probe one quirk surfaced a fifth traced bug in two interpreters
 that had passed everything else available here — which is an argument for authored probes that
 this project did not set out to make.
@@ -530,7 +542,7 @@ same party that would write the metrics.
   rewriting those projects.
 - `4c` ran only as a hand-verified pilot; `4b′` is an instrumentation helper plus a checklist
   demonstrated on two graders, not a generic checker.
-- Games were never tried as quirk-exercising ROMs (§4.3).
+- Games were never tried as quirk-exercising ROMs (§5, item 3).
 - §4.6 runs on **one authored 16-byte ROM** and one quirk, with a 14-pixel glyph on a 64×32
   monochrome display. GBA Eval's frames are 240×160 and in colour, where the same displacement
   disturbs a different fraction of the image. The finding is that the regime exists and is
@@ -543,15 +555,15 @@ same party that would write the metrics.
 
 ## 8. What would make this a real study
 
-1. **Author a quirk-exercising ROM, pre-registered before it is written.** This is the primary next
-   step. A ROM is an **input**, not a member of the population: the population is the interpreters,
-   and it stays third-party. Authoring an input is what GBA Eval does when it chooses which games
-   to replay. The risk is tuning the input until a chosen strategy fails, and the mitigation is
-   pre-registration — commit the ROM's exact design and the prediction *before* writing it, keep it
-   trivially inspectable (draw a glyph at an x position computed via `8XY6`), and publish its
-   source alongside its bytes.
-2. **Try real games as quirk-exercising ROMs** (§4.3). Untried, plausibly sufficient, and entirely
-   third-party — strictly better than authoring one if it works.
+1. **More authored ROMs, same discipline.** §4.6 already did this three times, and the method is
+   the part that is settled: a ROM is an **input**, not a member of the population, so authoring
+   one keeps the population third-party — which is what GBA Eval does when it picks which games to
+   replay. The risk is tuning the input until a chosen strategy fails, and the mitigation used was
+   pre-registration: exact design and prediction committed before the bytes, four acceptance
+   gates, source published beside the bytes. What is missing is **coverage**: one quirk per
+   divergence kind, and magnitude varied only for displacement (§7).
+2. **Try real games as quirk-exercising ROMs** (§5, item 3). Untried, plausibly sufficient, and
+   entirely third-party — strictly better than authoring one if it works.
 3. **Three or more fully-clean interpreters**, at roughly a dozen more adaptations.
 4. Then Predictions 1–9, unchanged, against the five strategies.
 
@@ -560,16 +572,17 @@ same party that would write the metrics.
 ```bash
 uv sync
 python -m vaudit.tasks.chip8.fetch    # population + ROMs at pinned commits (network, no API key)
-make check                            # 155 tests, offline, no API key
+make check                            # 173 tests, offline, no API key
 python -m vaudit.audit.sweep --tasks 5  # prices the run; buys nothing without --confirm
 git config core.hooksPath .githooks   # optional: activate the pre-commit gate (incident #2)
 ```
 
 **Order matters, and an earlier draft had it wrong.** Run `make check` before fetching and you get
-**111 passed, 14 skipped** — the adapter tests skip cleanly when the population is absent, by
+**124 passed, 19 skipped** — the adapter tests skip cleanly when the population is absent, by
 design, so the suite can never go green while silently claiming a study that did not run. Only
-after fetching is it 155. The draft listed the steps the other way round and claimed 155 for the
-first one.
+after fetching is it **173**. The draft listed the steps the other way round and claimed the
+fetched count for the unfetched one; that is incident #14, and the counts here were re-measured
+in both orders on 2026-09-17 rather than carried forward.
 
 **Verified from a clean clone on 2026-09-16**, which is how #12 and #13 were found: `make check`
 was failing on the format step while `ruff check` alone reported success. Steps 1, 2 and 3 now
@@ -619,9 +632,9 @@ both hold, and both turned out stronger than the draft claimed.
 | 11 ▲ | a hardening test asserted something | `assert x == y or x != y` cannot fail | re-reading my own test |
 | 12 ▲ | "all checks passed" | `ruff check` is lint only; `make check` also runs `ruff format --check`, which was failing | running the documented reproduce command from a clean clone |
 | 13 ▲ | quoted third-party source was verbatim | `ruff format` rewrote the quotes (`0xff` → `0xFF`) in evidence cited against those projects | reading the diff the formatter produced |
-| 14 ▲ | "`make check` — 155 tests" | in the documented order it is 111 passed, 14 skipped; the population has to be fetched first | running the steps as written, in the order written |
-| 16 ▲ | "the repository flipped to public on its own — an incident" | it did not. The owner made it public, deliberately, using an option I had offered them. I recorded a defect that never existed and then reverted their decision | the owner said so |
+| 14 ▲ | "`make check` — 155 tests" | in the documented order it was 111 passed, 14 skipped; the population has to be fetched first. The suite has grown since — §9 carries re-measured counts | running the steps as written, in the order written |
 | 15 ▲ | "the sweep command reproduces §4.1 and §4.2 here" | true of §4.1, false of §4.2 — the clean-room rewrite dropped the hardening track, so this repo cannot produce that number at all | checking what the shipped sweep actually measures before running it |
+| 16 ▲ | "the repository flipped to public on its own — an incident" | it did not. The owner made it public, deliberately, using an option I had offered them. I recorded a defect that never existed and then reverted their decision | the owner said so |
 
 #12, #13 and #14 were found by running §9's commands from a clean clone, which is why that is now part
 of the procedure rather than an assumption. #13 is the sharpest of the set: a tool whose job is

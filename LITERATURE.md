@@ -2,7 +2,7 @@
 
 `BRIEF.md` said "a real literature search goes before publication, not after." This is it, and it
 went badly for the novelty claims. Every check in this instrument has substantial prior art, and
-the §3.6 headline rests on a documented, named, twenty-year-old property of SSIM.
+the §4.6 headline rests on a documented, named, twenty-year-old property of SSIM.
 
 Recording it in full rather than adjusting the claims quietly.
 
@@ -12,13 +12,13 @@ Recording it in full rather than adjusting the claims quietly.
 
 Work on autograding programming assignments has measured this directly, reporting an assessment
 mechanism with **56.4%–64.1% false-negative error** — correct submissions wrongly rejected —
-against an improved mechanism at 0%–0.02%. It also names the mechanism §3.3 demonstrates: test
+against an improved mechanism at 0%–0.02%. It also names the mechanism §4.3 demonstrates: test
 suites produce false negatives "because the problem description allows for multiple distinct
 correct outputs for a given test input, but the test cases require one particular correct output
 instead." Separate work on LLM-generated test suites for autograding records a single run in which
 invalid generated tests failed **1,224 valid solutions**.
 
-**Consequence.** §3.3 (a differential grader accepting 1 of 6 spec-faithful implementations) is a
+**Consequence.** §4.3 (a differential grader accepting 1 of 6 spec-faithful implementations) is a
 **replication** of a known and much better-quantified phenomenon, on a smaller sample. It is not a
 discovery, and the write-up should not have implied the fairness direction was unmeasured.
 
@@ -38,7 +38,7 @@ Flaky-test detection is an established field, as already stated. 4c's two questi
 the annotation criteria OpenAI used for SWE-bench Verified with 93 developers. Both were already
 credited; nothing changes.
 
-## §3.6 — SSIM ranking a blank screen above a correct implementation
+## §4.6 — SSIM ranking a blank screen above a correct implementation
 
 **Prior art: SSIM's sensitivity to spatial translation is a documented drawback with a named
 fix.** The image-quality literature states plainly that "a key drawback of both MSE and SSIM
@@ -47,7 +47,7 @@ scaling", and that "small translations that are hardly visible significantly aff
 scores." **CW-SSIM** (complex-wavelet SSIM, Wang and Simoncelli, 2005) was designed specifically
 to compensate for small translations and rotations.
 
-**Consequence, and it is the largest correction here.** The §3.6 mechanism — that SSIM penalises
+**Consequence, and it is the largest correction here.** The §4.6 mechanism — that SSIM penalises
 relocation — is textbook, not a finding. Predictions 12, 14, 15 and 16 were registered against a
 mechanism that was already published; they confirm it in a new setting rather than discovering it.
 
@@ -63,9 +63,9 @@ mechanism that was already published; they confirm it in a new setting rather th
    exhaustively and the claim is weaker for that.
 3. **The method.** Pre-registration with dated amendments, falsifiers stated in advance, and a
    mechanism put at risk by Predictions 14–16.
-4. **§7.** A first-person record of sixteen measurements in one project that were about something
-   other than what they claimed. Nothing found in the search resembles it, and on reflection it is
-   the most original content here.
+4. **§2 and Appendix A.** A first-person record of sixteen measurements in one project that were
+   about something other than what they claimed. Nothing found in the search resembles it, and
+   on reflection it is the most original content here.
 
 ## What was not searched
 

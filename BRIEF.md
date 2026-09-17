@@ -49,7 +49,7 @@ fairness beside robustness for a specific verifier, repeatably, as it changes. A
 Verified precedent cuts in our favour on value even as it cuts against novelty — the current
 state of the art being expensive one-shot human annotation is the argument for automating it.
 That search has now been done — see `LITERATURE.md`. It found substantial prior art for every
-check, including the one §3.6 rests on, and the claims above are weaker than they read. Read the
+check, including the one §4.6 rests on, and the claims above are weaker than they read. Read the
 literature review before quoting anything from this document.
 
 ## The same argument in the field's own economics

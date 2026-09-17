@@ -8,8 +8,8 @@ results — `LITERATURE.md` is unsparing about that.
 
 What the project produced that is not a replication is `WRITEUP.md` §2: sixteen occasions inside
 one small project where a measurement was confidently about something other than what it claimed,
-each with a traced cause, none caught by the thing that broke. Four patterns, each with a direct
-analogue in building RL graders. Start there.
+each with a traced cause, none caught by the thing it broke failing at the moment it broke. Four
+patterns, each with a direct analogue in building RL graders. Start there.
 
 A verifier used for RL or evaluation has to do three things: reject every cheat, accept every
 legitimate solution, and return the same verdict twice. Tooling exists for the first. This
@@ -27,9 +27,11 @@ measures the other two.
 Either is trivially maxed alone (accept everything, reject everything), so neither is ever
 reported without the other beside it. Every number carries the population it was computed over.
 
-None of these is a new idea. Screening a benchmark for over-specific tests is what human
-annotators did for SWE-bench Verified; flaky-test detection is an established field. What does
-not exist is the automated, per-grader combination, reported repeatably as a grader changes.
+None of these is a new idea, and `catch_rate` is the mutation score, which tools have automated
+since the 1980s. Screening a benchmark for over-specific tests is what human annotators did for
+SWE-bench Verified; flaky-test detection is an established field. What no prior work was *found*
+for is the per-grader combination — all of these reported together, repeatably, as a grader
+changes — and that search was not exhaustive (`LITERATURE.md` says where it was thin).
 
 ## Results so far
 
@@ -39,30 +41,32 @@ sample of interpreters, not a claim about interpreters in other languages, and n
 any misgrading rate in the wild.
 
 
-- **EvalPlus base graders miss 25–38% of genuinely broken mutants** on two of five of the
-  hardest tasks — deterministic, no API spend.
+- **EvalPlus base graders missed 4 of 33 genuinely broken mutants**, all on two of the five
+  sparsest-coverage tasks (3 of 8, and 1 of 4). Deterministic, no API spend. The denominators are
+  small enough that these are reported as counts, not a rate.
 - **A differential grader rejected 5 of 6 spec-faithful implementations** of a small replication
   task, every rejection tracing to something the spec never determined (record type, summary
   type, exception type, float precision). Labelled a pilot: the spec gap is authored, because
   the auditor is what is under test.
 - **Null result, reported:** hardening cost nothing in legitimate work across 5 EvalPlus tasks.
   Recorded rather than dropped.
-- **One of seven** interpreters in this sample passes the reference correctness suite
-  (`Timendus/chip8-test-suite`). Four of the six failures are traced to specific lines in their
-  own source (`ADAPTERS.md`); two are untraced and marked as such. What this supports is narrow:
-  *when picking a reference implementation for differential grading, correctness cannot be
-  assumed from the fact that something is a working, published interpreter.* It is not a rate.
+- **One of seven** interpreters in this sample fails nothing its peers pass on the reference
+  correctness suite (`Timendus/chip8-test-suite`) — which means nothing in this population
+  contradicts it, not that it passes every test in the suite. Each of the other six has at least
+  one failure traced to a specific line in its own source (`ADAPTERS.md`). What this supports is
+  narrow: *when picking a reference implementation for differential grading, correctness cannot
+  be assumed from the fact that something is a working, published interpreter.* It is not a rate.
 
 ## Run it
 
 ```bash
 uv sync
 python -m vaudit.tasks.chip8.fetch      # population + ROMs at pinned commits
-make check                              # 155 tests, offline, no API key
+make check                              # 173 tests, offline, no API key
 python -m vaudit.audit.sweep --tasks 5  # prices a run; buys nothing without --confirm
 ```
 
-Run `make check` before fetching and you get 111 passed, 14 skipped: the adapter tests skip
+Run `make check` before fetching and you get 124 passed, 19 skipped: the adapter tests skip
 cleanly when the population is absent, so the suite can never pass while silently claiming a
 study that did not run.
 
