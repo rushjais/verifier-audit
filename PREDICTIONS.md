@@ -414,3 +414,35 @@ their quirk choices rather than adopting a platform wholesale.
 > headline number stands.
 >
 > **Confidence:** medium-high on the direction, low on whether it clears the blank screen.
+
+---
+
+# AMENDMENT 6 — varying the shift magnitude; Prediction 15 (2026-09-17)
+
+ROM A fixes one displacement: four pixels. §3.6 attributes SSIM's failure there to *block* count —
+relocation disturbs the block the glyph left and the block it entered. That explanation makes a
+prediction about magnitude that is not the obvious one, so it is registered before the ROMs exist.
+
+**The ROM family.** ROM A's opcodes generalise: `V1 = A`, `V2 = B`, `8126`. The VIP behaviour draws
+at `B>>1`, CHIP-48 at `A>>1`, so choosing A and B sets the displacement. Everything else — glyph,
+row, timing — is unchanged. Displacements of 0, 1, 2, 4, 8, 16 and 24 pixels, where 0 is a control
+that must produce identical frames under both behaviours.
+
+> **Prediction 15.** SSIM's score for the correct-but-divergent candidate **will not degrade
+> monotonically with displacement.** If the mechanism in §3.6 is right, what matters is how many
+> 8×8 blocks the union of the two glyph positions touches, not how far apart they are. A 24-pixel
+> shift disturbs two blocks, exactly as a well-placed 4-pixel shift does, so the two should score
+> **within 0.02 of each other** despite a 6× difference in distance.
+>
+> **Falsified if** SSIM decreases monotonically with displacement across 1, 2, 4, 8, 16, 24 — that
+> is, if distance rather than block count predicts the score.
+>
+> **Confidence:** medium. The 4-wide glyph and 8-wide blocks mean small displacements can straddle
+> a boundary and touch two blocks anyway, so the relationship may be ragged rather than flat. What
+> is predicted is the absence of monotonicity, not a flat line.
+
+A second thing this family settles, at no extra cost: **whether pixel proportion's failure is
+magnitude-dependent.** It compares pixel-by-pixel with no blocks, so on that metric a larger
+displacement should make the divergent candidate strictly worse — up to the point where the two
+glyph positions stop overlapping, after which it is constant. If pixel proportion is monotone
+where SSIM is not, the two failures have different causes and the write-up should say so.
