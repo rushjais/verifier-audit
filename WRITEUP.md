@@ -1,6 +1,6 @@
 # Is this grader fair?
 
-**Draft — 2026-09-16. Not published.** Numbers reproduce from this repository; commands in §9.
+**Last updated 2026-09-17.** Numbers reproduce from this repository; commands in §9.
 
 > **TL;DR.** Built an instrument that measures whether a grader accepts correct work, returns the
 > same verdict twice, and tests only what it told the candidate — not just whether it can be
