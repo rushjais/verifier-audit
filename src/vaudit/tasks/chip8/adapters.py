@@ -312,6 +312,41 @@ class debugloop_adapter:
             return out
 
 
+@dataclass
+class islay_adapter:
+    """IslayLaphroaig/CHIP-8. Chip8() with cycle() = one instruction and a flat display list.
+
+    No GUI dependency of any kind. Their main.py loads the font from a `font_set` file at offset
+    0 before the ROM at 512; the adapter does the same, since the CPU does not do it itself.
+    """
+
+    root: Path
+    name: str = "islay"
+    quirks: dict = field(default_factory=dict)
+    instructions: int = 0
+
+    def frames(self, rom: bytes, count: int) -> list[Frame]:
+        with _isolated(self.root / "src", "chip8"):
+            import chip8 as islay_chip8
+
+        with tempfile.TemporaryDirectory() as tmp:
+            rom_path = Path(tmp) / "rom.ch8"
+            rom_path.write_bytes(rom)
+            machine = islay_chip8.Chip8()
+            machine.load_data(str(self.root / "font_set"), 0)
+            machine.load_data(str(rom_path), 512)
+
+            self.instructions = 0
+            out: list[Frame] = []
+            for _ in range(count):
+                for _ in range(CYCLES_PER_FRAME):
+                    machine.cycle()
+                    self.instructions += 1
+                machine.update_timers()
+                out.append(bytes(1 if p else 0 for p in machine.display))
+            return out
+
+
 def _from_rows(rows) -> Frame:
     """Flatten a row-major 2D buffer into the flat frame the metrics compare."""
     pixels = bytearray(WIDTH * HEIGHT)
@@ -324,6 +359,7 @@ def _from_rows(rows) -> Frame:
 ADAPTERS = {
     "craigthomas_adapter": craigthomas_adapter,
     "debugloop_adapter": debugloop_adapter,
+    "islay_adapter": islay_adapter,
     "wyattferguson_adapter": wyattferguson_adapter,
 }
 

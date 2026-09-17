@@ -86,6 +86,19 @@ POPULATION: tuple[Entry, ...] = (
         ),
     ),
     Entry(
+        key="islay",
+        repo="IslayLaphroaig/CHIP-8",
+        commit="e731ec8c52eadd27d307ad47fc72a596d0d2731b",
+        licence="MIT",
+        adapter="islay_adapter",
+        notes=(
+            "Chip8() with cycle() = exactly one instruction and a flat 2048-entry display list. "
+            "No GUI dependency at all, so no stubbing. Their main.py loads the font from a "
+            "`font_set` file at offset 0 before the ROM at 512; the adapter repeats that, since "
+            "the CPU does not do it itself."
+        ),
+    ),
+    Entry(
         key="debugloop",
         repo="debugloop/chip8",
         commit="ce22f0716a96b9eabc94961fbfdab17a59f595db",
