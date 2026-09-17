@@ -5,6 +5,7 @@ __pycache__/
 .ruff_cache/
 .env
 runs/
+!data/solutions/
 POSITIONING.md
 .population/
 chip8.log

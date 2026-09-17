@@ -68,11 +68,34 @@ They are a proxy for real defects, not a sample of them.
 
 | task | catchable mutants | caught | catch_rate | equivalent (excluded) | honest_pass | flake | shapes/20 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| HumanEval/81 | 8 | 5 | **0.62** | 0 | 1.00 | 0.00 | 16 |
-| HumanEval/105 | 8 | 8 | 1.00 | 0 | 1.00 | 0.00 | 19 |
-| HumanEval/6 | 6 | 6 | 1.00 | 1 | 1.00 | 0.00 | 18 |
-| HumanEval/75 | 4 | 3 | **0.75** | 4 | 1.00 | 0.00 | 20 |
-| HumanEval/39 | 7 | 7 | 1.00 | 1 | 1.00 | 0.00 | 19 |
+| HumanEval/81 | 8 | 5 | **0.62** | 0 | 1.00 (19 verified) | 0.00 | 16 |
+| HumanEval/105 | 8 | 8 | 1.00 | 0 | 1.00 (20 verified) | 0.00 | 20 |
+| HumanEval/6 | 6 | 6 | 1.00 | 1 | 1.00 (16 verified) | 0.00 | 19 |
+| HumanEval/75 | 4 | 3 | **0.75** | 4 | 1.00 (18 verified) | 0.00 | 20 |
+| HumanEval/39 | 7 | 7 | 1.00 | 1 | 1.00 (18 verified) | 0.00 | 19 |
+
+**Provenance.** Generated 2026-09-17 in this repository. 100 solutions across 5 tasks, spread over
+`claude-sonnet-5` (35), `claude-haiku-4-5` (35) and `claude-opus-5` (30), one style directive per
+index. 31,603 input / 26,063 output tokens; actual spend ≈ $0.32 against a $0.35 estimate and a
+$2.00 cap. **There is no seed.** The Anthropic API exposes no sampling seed, so the run is not
+replayable; instead every solution is committed under `data/solutions/`, with its model, directive
+and timestamp, so the table above reproduces offline with no API calls. Reproducibility here comes
+from keeping the population, not from replaying the sampler.
+
+**Differences from the predecessor-repository run.** Reported as they came out; nothing was rerun
+to match.
+
+| column | predecessor | this repo | note |
+| --- | --- | --- | --- |
+| catch_rate | 0.62, 1.00, 1.00, 0.75, 1.00 | **identical** | mutants are deterministic AST surgery — no model involved, so this was expected and it held |
+| honest_pass | 1.00 × 5 | 1.00 × 5 | unchanged |
+| flake_rate | 0.00 × 5 | 0.00 × 5 | unchanged |
+| distinct shapes | 16, 19, 18, 20, 19 | 16, **20**, **19**, 20, 19 | two tasks gained one distinct shape |
+| verified (of 20) | 19, 20, 17, 19, 18 | 19, 20, **16**, **18**, 18 | two tasks had one more solution fail the oracle |
+
+The population-dependent columns moved by one in four places; the measured columns did not move at
+all. §3.2's number is **not** in this comparison because it cannot be produced here at all — see
+that section.
 
 **The denominators are small — 8 and 4.** "0.75" is three mutants out of four. Read as counts, the
 result is: *three missed mutants across five tasks*, on a capped sample of 8 mutants per task. That
@@ -205,32 +228,53 @@ same party that would write the metrics.
 ## 7. Fifteen measurements that were about the wrong thing
 
 Assembled while building an instrument to detect exactly this. **Thirteen were introduced by the
-model during this work** (marked ▲); #1 was in the original hackathon code, which all three of us
-wrote; #2 is a property of git that nobody introduced and nobody noticed.
+model during this work**; #1 was in the original hackathon code, which all three of us wrote; #2
+is a property of git that nobody introduced and nobody noticed. The full list is Appendix A; what
+matters is that they fall into four patterns, and the patterns are the finding.
 
-| # | claimed | true | how it surfaced |
-| --- | --- | --- | --- |
-| 1 | harness tampering categorically sealed | answers readable from the test module's namespace | reading another team's public writeup |
-| 2 | the pre-commit gate was running | `core.hooksPath` is local config; a clone doesn't carry it | a commit succeeded that should have been blocked |
-| 3 ▲ | `make check` passed | piped to `tail`, so the exit status was `tail`'s | **the lint error was printed and ignored**; found later by a bare `ruff check` |
-| 4 ▲ | every exploit was sealed | `RLIMIT_AS` raised on macOS, so no sandboxed run started | a traceback, from tests written days earlier for another purpose |
-| 5 ▲ | a working interpreter crashed | my `pygame.key` stub returned `{}` where a sequence was required | a `KeyError` traceback |
-| 6 ▲ | timers were running | the adapter never called `decrement_timers()` | reading their `emulator.py` for an unrelated reason |
-| 7 ▲ | frames were comparable | one adapter built them from 12 instructions, the rest from 15 | reading their `cycle()` |
-| 8 ▲ | the tightened eligibility rule applied | fields added to the dataclass, table never updated — inert | test failures |
-| 9 ▲ | the quirks ROM was excluded for needing input | hardcoded reason string; it is timer-dependent | reading the report's own output |
-| 10 ▲ | a rounding variant passed the grader | no visible input produced a repeating average | reading the result table |
-| 11 ▲ | a hardening test asserted something | `assert x == y or x != y` cannot fail | re-reading my own test |
-| 12 ▲ | "all checks passed" | `ruff check` is lint only; `make check` also runs `ruff format --check`, which was failing | running the documented reproduce command from a clean clone |
-| 13 ▲ | quoted third-party source was verbatim | `ruff format` rewrote the quotes (`0xff` → `0xFF`) in evidence cited against those projects | reading the diff the formatter produced |
-| 14 ▲ | "`make check` — 155 tests" | in the documented order it is 111 passed, 14 skipped; the population has to be fetched first | running the steps as written, in the order written |
-| 15 ▲ | "the sweep command reproduces §3.1 and §3.2 here" | true of §3.1, false of §3.2 — the clean-room rewrite dropped the hardening track, so this repo cannot produce that number at all | checking what the shipped sweep actually measures before running it |
+### A. The check was not running (#2, #3, #4, #8, #12)
 
-#12, #13 and #14 were found by running §9's commands from a clean clone, which is why that is now part
-of the procedure rather than an assumption. #13 is the sharpest of the set: a tool whose job is
-maintaining quality silently modified the evidence, in a document arguing that measurements are
-confidently about the wrong thing. Quoted source is now fenced as `text` so no formatter can
-touch it.
+The most common failure, and the most dangerous, because an inert check is indistinguishable from
+a passing one. `core.hooksPath` is local git config, so a clone has the hook files and no hook.
+`make check | tail` reports `tail`'s exit status, so a failing gate reads as success. `RLIMIT_AS`
+raised on macOS before any candidate ran, so every exploit scored 0 and every exploit looked
+sealed. Fields were added to a dataclass and the table never updated, so a tightened eligibility
+rule did nothing. `ruff check` was run and reported success while `make check` — a superset — was
+failing.
+
+**What distinguishes these: the system was quieter than before, not louder.** Nothing errored.
+A sealed exploit, a green gate and a passing suite all look like progress.
+
+### B. The claim was wider than the thing verified (#1, #11, #14, #15)
+
+"Harness tampering categorically sealed" rested on a test covering file tampering only. A
+hardening test asserted `x == y or x != y`, which cannot fail. "155 tests" was 111 passed and 14
+skipped in the order the document gave. "The sweep reproduces §3.1 and §3.2" was true of one and
+false of the other.
+
+**Each was true of something narrower than its sentence.** None required a bug to produce — only
+a summary written a little ahead of the evidence.
+
+### C. My scaffolding was mistaken for their behaviour (#5, #6, #7, #13)
+
+A `pygame.key` stub returning `{}` where a sequence was required made a working interpreter throw,
+which read as "this implementation crashes on the quirks ROM" and nearly removed it from the
+population. An adapter never called `decrement_timers()`, so timers silently never advanced. One
+adapter built frames from 12 instructions while the rest used 15. `ruff format` rewrote quoted
+third-party source — `0xff` → `0xFF` — inside evidence cited against those projects.
+
+**This is the category the whole study is about**, arrived at from the inside: a misconfigured
+subject and a defective one are indistinguishable from the outside, and the harness is the thing
+most likely to be misconfigured.
+
+### D. The fixture could not show what it was built to show (#9, #10)
+
+A report hardcoded "needs live input" as the exclusion reason for every excluded ROM, so a
+timer-dependent exclusion printed a confident wrong explanation. A `rounded_average` variant
+passed the grader because no visible input produced a repeating average — the fixture could not
+express the difference it existed to demonstrate.
+
+---
 
 **Correcting an earlier draft of this section:** it claimed none was caught by an error message.
 That is false. #4, #5 and #8 surfaced as tracebacks or test failures, and #3 printed an error that
@@ -238,9 +282,12 @@ was displayed and ignored. The accurate claim is narrower: **none was caught by 
 failing at the moment it broke.** The tracebacks came from tests written for other purposes, days
 later; the rest came from reading output that looked wrong.
 
-That correction is itself the twelfth instance, and the reason the section is here.
+That correction is itself the sixteenth instance, and the reason the section is here.
 
----
+#12, #13, #14 and #15 were all found in one sitting, by running the documented commands from a
+clean clone and by checking what the shipped code measures before running it. Four of fifteen came
+from an hour of not trusting the documentation — which is the cheapest audit in this document and
+the one with the highest yield.
 
 ## 8. What would make this a real study
 
@@ -280,8 +327,9 @@ dry run only; it prints the estimate and buys nothing.
 Three caveats. §3.2 has no reproduce path in this repository at all (see that section);
 `.githooks` is not active in a fresh clone — `git config core.hooksPath .githooks`
 is required, and that is incident #2. And §3.1/§3.2 were produced in the predecessor repository
-before the clean-room rewrite. The sweep reproduces **§3.1 only**, and regenerates the solution
-population to do it, at roughly $0.35.
+before the clean-room rewrite. §3.1 has since been regenerated **in this repository**
+(2026-09-17) and its population is committed under `data/solutions/`, so it now reproduces with no
+API calls. §3.2 remains predecessor-only.
 
 ## 10. External claims, for checking
 
@@ -299,3 +347,31 @@ both hold, and both turned out stronger than the draft claimed.
 | 6 | TestBench-Forge reported a call-stack exploit against their own reward | https://www.aivalley.io/hackathons/hud-frontier-rsi-rl-environments-hackathon/projects — TestBench-Forge |
 | 7 | corax89's test ROM, the basis Timendus adapted | https://github.com/corax89/chip8-test-rom |
 | 8 | **Verified.** "test-cases can be limited in both quantity and quality"; 80× more tests than original HumanEval; "reducing the pass@k by up-to 19.3-28.9%". Paper: *Is Your Code Generated by ChatGPT Really Correct?*, arXiv:2305.01210 | https://arxiv.org/abs/2305.01210 and https://github.com/evalplus/evalplus |
+
+---
+
+## Appendix A — the full list
+
+| # | claimed | true | how it surfaced |
+| --- | --- | --- | --- |
+| 1 | harness tampering categorically sealed | answers readable from the test module's namespace | reading another team's public writeup |
+| 2 | the pre-commit gate was running | `core.hooksPath` is local config; a clone doesn't carry it | a commit succeeded that should have been blocked |
+| 3 ▲ | `make check` passed | piped to `tail`, so the exit status was `tail`'s | **the lint error was printed and ignored**; found later by a bare `ruff check` |
+| 4 ▲ | every exploit was sealed | `RLIMIT_AS` raised on macOS, so no sandboxed run started | a traceback, from tests written days earlier for another purpose |
+| 5 ▲ | a working interpreter crashed | my `pygame.key` stub returned `{}` where a sequence was required | a `KeyError` traceback |
+| 6 ▲ | timers were running | the adapter never called `decrement_timers()` | reading their `emulator.py` for an unrelated reason |
+| 7 ▲ | frames were comparable | one adapter built them from 12 instructions, the rest from 15 | reading their `cycle()` |
+| 8 ▲ | the tightened eligibility rule applied | fields added to the dataclass, table never updated — inert | test failures |
+| 9 ▲ | the quirks ROM was excluded for needing input | hardcoded reason string; it is timer-dependent | reading the report's own output |
+| 10 ▲ | a rounding variant passed the grader | no visible input produced a repeating average | reading the result table |
+| 11 ▲ | a hardening test asserted something | `assert x == y or x != y` cannot fail | re-reading my own test |
+| 12 ▲ | "all checks passed" | `ruff check` is lint only; `make check` also runs `ruff format --check`, which was failing | running the documented reproduce command from a clean clone |
+| 13 ▲ | quoted third-party source was verbatim | `ruff format` rewrote the quotes (`0xff` → `0xFF`) in evidence cited against those projects | reading the diff the formatter produced |
+| 14 ▲ | "`make check` — 155 tests" | in the documented order it is 111 passed, 14 skipped; the population has to be fetched first | running the steps as written, in the order written |
+| 15 ▲ | "the sweep command reproduces §3.1 and §3.2 here" | true of §3.1, false of §3.2 — the clean-room rewrite dropped the hardening track, so this repo cannot produce that number at all | checking what the shipped sweep actually measures before running it |
+
+#12, #13 and #14 were found by running §9's commands from a clean clone, which is why that is now part
+of the procedure rather than an assumption. #13 is the sharpest of the set: a tool whose job is
+maintaining quality silently modified the evidence, in a document arguing that measurements are
+confidently about the wrong thing. Quoted source is now fenced as `text` so no formatter can
+touch it.

@@ -102,9 +102,22 @@ def main(argv=None) -> int:
     parser.add_argument("--k", type=int, default=20)
     parser.add_argument("--mutants", type=int, default=8)
     parser.add_argument("--confirm", action="store_true", help="actually spend money")
+    parser.add_argument(
+        "--max-spend",
+        type=float,
+        default=2.00,
+        help="refuse to run if the estimate exceeds this, in USD (default 2.00)",
+    )
     args = parser.parse_args(argv)
 
-    print(estimate(args.tasks, args.k, DEFAULT_MODELS).render())
+    priced = estimate(args.tasks, args.k, DEFAULT_MODELS)
+    print(priced.render())
+    if priced.total > args.max_spend:
+        print(
+            f"\nREFUSED: estimate ${priced.total:.2f} exceeds the cap of ${args.max_spend:.2f}. "
+            "Raise --max-spend deliberately or reduce --tasks/--k."
+        )
+        return 1
     if not args.confirm:
         print("\nDry run. Re-run with --confirm to generate. Everything after generation is free.")
         return 0

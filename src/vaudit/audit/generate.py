@@ -18,6 +18,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,7 +26,10 @@ from pathlib import Path
 from ..substrate import Task
 from .honest import Candidate
 
-CHECKPOINT_DIR = Path("runs/solutions")
+# TRACKED, not gitignored. The generated population is committed so §3.1 reproduces with no API
+# calls at all — the numbers in the write-up are a property of this repository, not of a run
+# someone would have to pay to repeat.
+CHECKPOINT_DIR = Path("data/solutions")
 
 # USD per million tokens. Cross-check against the pricing docs before quoting a number publicly.
 MODEL_PRICES = {
@@ -104,6 +108,10 @@ def estimate(n_tasks: int, k: int, models: tuple[str, ...] = DEFAULT_MODELS) -> 
 # --- structural diversity ---------------------------------------------------------------------
 
 
+def _now() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
 def fingerprint(source: str) -> str:
     """A hash of a solution's SHAPE: node types and nesting, with all names erased.
 
@@ -178,6 +186,15 @@ def load_checkpoint(task_id: str, directory: Path | None = None) -> list[Candida
     return [Candidate(label=r["label"], source=r["source"]) for r in rows]
 
 
+def provenance(task_id: str, directory: Path | None = None) -> list[dict]:
+    """Model, idiom, timestamp and token usage for each committed solution."""
+    path = _checkpoint_path(task_id, directory)
+    if not path.exists():
+        return []
+    rows = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+    return [{k: v for k, v in r.items() if k != "source"} for r in rows]
+
+
 def generate_solutions(
     task: Task,
     k: int = 20,
@@ -233,8 +250,22 @@ def generate_solutions(
             )
             text = "".join(b.text for b in response.content if b.type == "text")
             candidate = Candidate(label=label, source=_strip_fences(text))
+            usage = getattr(response, "usage", None)
+            # Provenance travels with every solution: which model wrote it, under which style
+            # directive, when. There is no seed to record — the Anthropic API exposes no sampling
+            # seed — so reproducibility comes from committing the solutions, not from replaying
+            # the sampler. That limitation is stated in the write-up rather than implied away.
+            record = {
+                "label": label,
+                "model": model,
+                "idiom": idiom,
+                "generated_at": _now(),
+                "input_tokens": getattr(usage, "input_tokens", None),
+                "output_tokens": getattr(usage, "output_tokens", None),
+                "source": candidate.source,
+            }
             # Written before the next call, so a spend cap costs the remainder and not the run.
-            checkpoint.write(json.dumps({"label": label, "source": candidate.source}) + "\n")
+            checkpoint.write(json.dumps(record) + "\n")
             checkpoint.flush()
             generated.append(candidate)
 
