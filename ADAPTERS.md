@@ -131,8 +131,31 @@ The carry test itself is correct (`v[y] > 0xFF - v[x]`), but VF is assigned *bef
 is stored. When VF is the destination or an operand the sum overwrites the flag — the same
 vF-as-operand case as wyattferguson, arrived at independently.
 
-### islay, rudzen — untraced
+### islay — `src/chip8.py:99-129`
 
-Both fail the suite (18 and 14 respectively) and both pass the ibm-logo control. The specific
-lines have not been identified, and that is recorded rather than assumed: their failures support
-the observation only as far as "the suite reports failures", not as a diagnosed defect.
+```python
+def set_vx_to_vx_plus_vy(self):
+    self.v[0xF] = 0
+    total = self.v[self.x(self.opcode)] + self.v[self.y(self.opcode)]
+```
+
+The carry and borrow *logic* is right (`total > 255`, `difference < 0`). The ordering is not: VF
+is written before the operands are read, so when VX or VY is VF the operand read returns the flag
+just written rather than the register's value. That is worse than the usual vF-as-operand defect,
+which corrupts only the flag; here it corrupts the arithmetic. Separately,
+`set_vx_to_vx_shl_1` (line 129) assigns `self.v[x] << 1` with no `& 0xFF`, leaving VX above 255.
+
+### rudzen — `cpu.py:128, 134`
+
+```python
+elif sub_op == 5:  # SUB Vx, Vy
+    chip8.v[15] = 1 if chip8.v[vx] > chip8.v[vy] else 0
+```
+
+Borrow is computed with `>` where it needs `>=`. When VX == VY the subtraction does not borrow, so
+VF should be 1; this sets 0. The same off-by-one repeats for SUBN at line 134. VF is also assigned
+before VX in every branch of the `8XY_` group, so a VF destination clobbers the flag.
+
+### All six traced
+
+No interpreter's failure is now recorded as "the suite said so" without a cause in its own source.
