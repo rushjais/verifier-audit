@@ -21,8 +21,21 @@ model under that direction. §7 records who introduced each defect.
 **A verifier can be un-gameable and still be wrong, and the second failure is invisible in any
 single run.** Robustness tooling exists. The other properties — does it accept correct work, does
 it agree with itself, does it test only what the prompt made knowable — *are* checked today, but by
-hand, per benchmark, once, by people who then move on. What does not exist is an automated
-per-grader version that can be re-run as a grader changes.
+hand, per benchmark, once, by people who then move on.
+
+The clearest precedent is **SWE-bench Verified**, and it is worth stating how exactly it matches.
+OpenAI "launched a human annotation campaign with professional software developers to screen each
+sample of the SWE-bench test set for appropriately scoped unit tests and well-specified issue
+descriptions", working with **93 developers** over **1,699 samples** to produce a verified set of
+**500**. Their two annotation criteria were:
+
+> Whether we consider the issue description to be underspecified and hence unfair to be testing on.
+>
+> Whether the FAIL_TO_PASS unit tests filter out valid solutions.
+
+Those are `4c` and `4a`. The problem is understood and the criteria are settled; what is missing
+is a version that does not cost 93 people and cannot be re-run when a grader changes. That is the
+gap this instrument aims at, and the honest framing of its contribution.
 
 Four numbers came out of this, all modest and all scoped in §3: a mutation catch rate below 1.0 on
 2 of 5 EvalPlus tasks; a null result on hardening; a 1-in-6 honest-pass on an authored replication
@@ -65,9 +78,12 @@ They are a proxy for real defects, not a sample of them.
 result is: *three missed mutants across five tasks*, on a capped sample of 8 mutants per task. That
 is a demonstration that the check works and finds something, not a measurement of grader strength.
 
-This **replicates the motivation for EvalPlus itself**, which exists because HumanEval's base tests
-are too sparse to catch wrong code; it does not extend it. The contribution is that the number is
-produced automatically, per grader, for **$0** — mutants need no model calls.
+This **replicates the motivation for EvalPlus itself** and does not extend it. EvalPlus exists
+because "test-cases can be limited in both quantity and quality for fully assessing the functional
+correctness of the generated code"; it adds **80×** more tests than original HumanEval and reports
+that doing so reduces "the pass@k by up-to 19.3-28.9%". Measured against that, three missed
+mutants is a small echo of a known and much larger effect. The contribution is not the finding but
+the mechanism: produced automatically, per grader, for **$0**, because mutants need no model calls.
 
 ### 3.2 Null result: hardening cost nothing
 
@@ -236,9 +252,9 @@ sweep command reproduces them here but regenerates the solution population, whic
 
 ## 10. External claims, for checking
 
-Every claim in this document that rests on someone else's words, with its source. **Read and
-verified by me:** 1–4, 6, 7. **Not independently verified — please check before publication:**
-5 and 8.
+Every claim in this document that rests on someone else's words, with its source. **All eight have
+now been read at source.** 5 and 8 were checked after an earlier draft flagged them as unverified;
+both hold, and both turned out stronger than the draft claimed.
 
 | # | claim | source |
 | --- | --- | --- |
@@ -246,7 +262,7 @@ verified by me:** 1–4, 6, 7. **Not independently verified — please check bef
 | 2 | Mesen2 described as "one of the most accurate software GBA emulators available"; graded via SSIM / log-mel / test ROMs | https://gbaeval.com/ |
 | 3 | Replication training; "writing effective and comprehensive tests remains a non-trivial task" | https://www.mechanize.work/blog/the-upcoming-gpt-3-moment-for-rl/ |
 | 4 | A cross on the flags test means "you have an issue in your interpreter logic" | https://github.com/Timendus/chip8-test-suite — README, Flags test |
-| 5 | SWE-bench Verified used human annotators to screen for over-specific tests and underspecified problems | https://openai.com/index/introducing-swe-bench-verified/ — **unverified** |
+| 5 | **Verified, and stronger than stated.** 93 developers, 1,699 samples annotated, 500 verified. Criteria quoted verbatim in §1 and are exactly `4a` and `4c`. Their worked example is a test requiring an exact deprecation message the agent could not have known. | https://openai.com/index/introducing-swe-bench-verified/ |
 | 6 | TestBench-Forge reported a call-stack exploit against their own reward | https://www.aivalley.io/hackathons/hud-frontier-rsi-rl-environments-hackathon/projects — TestBench-Forge |
 | 7 | corax89's test ROM, the basis Timendus adapted | https://github.com/corax89/chip8-test-rom |
-| 8 | EvalPlus exists because HumanEval's base tests are too sparse | https://github.com/evalplus/evalplus — **unverified** |
+| 8 | **Verified.** "test-cases can be limited in both quantity and quality"; 80× more tests than original HumanEval; "reducing the pass@k by up-to 19.3-28.9%". Paper: *Is Your Code Generated by ChatGPT Really Correct?*, arXiv:2305.01210 | https://arxiv.org/abs/2305.01210 and https://github.com/evalplus/evalplus |
