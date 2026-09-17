@@ -1,6 +1,17 @@
-# Upstream issue drafts — for review, not filed
+# Upstream issues — filed 2026-09-17
 
-**Nothing here has been posted.** Four drafts, one per eligible repository.
+All four were filed after review. Each links to the issue as posted; the text below is what was
+submitted, minus the suggested-fix blocks that were dropped before filing.
+
+| repo | issue |
+| --- | --- |
+| `robertolaru/chip8py` | https://github.com/robertolaru/chip8py/issues/1 |
+| `rudzen/Chip8Py` | https://github.com/rudzen/Chip8Py/issues/2 |
+| `IslayLaphroaig/CHIP-8` | https://github.com/IslayLaphroaig/CHIP-8/issues/1 |
+| `cwithmichael/chip8_py` | https://github.com/cwithmichael/chip8_py/issues/2 |
+
+`wyattferguson/chip8-emulator` and `debugloop/chip8` have issues disabled and could not be
+filed. Their defects are recorded in `ADAPTERS.md` and remain unreported upstream.
 
 ## Eligibility, checked 2026-09-17
 
