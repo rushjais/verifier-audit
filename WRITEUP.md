@@ -6,7 +6,7 @@
 > same verdict twice, and tests only what it told the candidate — not just whether it can be
 > cheated. It produced four modest numbers and one negative result: the headline study, comparing
 > five grading strategies on real third-party CHIP-8 interpreters, could not be run, for three
-> reasons each measured rather than guessed. The most useful section is §7 — thirteen times during
+> reasons each measured rather than guessed. The most useful section is §7 — fourteen times during
 > construction a measurement here was confidently about something other than what it claimed.
 
 **Authorship.** Built with Claude Code. I set the direction, made the scoping calls, reviewed the
@@ -194,9 +194,9 @@ same party that would write the metrics.
 
 ---
 
-## 7. Thirteen measurements that were about the wrong thing
+## 7. Fourteen measurements that were about the wrong thing
 
-Assembled while building an instrument to detect exactly this. **Eleven were introduced by the
+Assembled while building an instrument to detect exactly this. **Twelve were introduced by the
 model during this work** (marked ▲); #1 was in the original hackathon code, which all three of us
 wrote; #2 is a property of git that nobody introduced and nobody noticed.
 
@@ -215,8 +215,9 @@ wrote; #2 is a property of git that nobody introduced and nobody noticed.
 | 11 ▲ | a hardening test asserted something | `assert x == y or x != y` cannot fail | re-reading my own test |
 | 12 ▲ | "all checks passed" | `ruff check` is lint only; `make check` also runs `ruff format --check`, which was failing | running the documented reproduce command from a clean clone |
 | 13 ▲ | quoted third-party source was verbatim | `ruff format` rewrote the quotes (`0xff` → `0xFF`) in evidence cited against those projects | reading the diff the formatter produced |
+| 14 ▲ | "`make check` — 155 tests" | in the documented order it is 111 passed, 14 skipped; the population has to be fetched first | running the steps as written, in the order written |
 
-#12 and #13 were found by running §9's commands from a clean clone, which is why that is now part
+#12, #13 and #14 were found by running §9's commands from a clean clone, which is why that is now part
 of the procedure rather than an assumption. #13 is the sharpest of the set: a tool whose job is
 maintaining quality silently modified the evidence, in a document arguing that measurements are
 confidently about the wrong thing. Quoted source is now fenced as `text` so no formatter can
@@ -250,10 +251,17 @@ That correction is itself the twelfth instance, and the reason the section is he
 
 ```bash
 uv sync
-make check                                    # 155 tests, offline, no API key
-python -m vaudit.tasks.chip8.fetch            # population + ROMs, pinned commits
-python -m vaudit.audit.sweep --tasks 5        # prices the run; buys nothing without --confirm
+python -m vaudit.tasks.chip8.fetch    # population + ROMs at pinned commits (network, no API key)
+make check                            # 155 tests, offline, no API key
+python -m vaudit.audit.sweep --tasks 5  # prices the run; buys nothing without --confirm
+git config core.hooksPath .githooks   # optional: activate the pre-commit gate (incident #2)
 ```
+
+**Order matters, and an earlier draft had it wrong.** Run `make check` before fetching and you get
+**111 passed, 14 skipped** — the adapter tests skip cleanly when the population is absent, by
+design, so the suite can never go green while silently claiming a study that did not run. Only
+after fetching is it 155. The draft listed the steps the other way round and claimed 155 for the
+first one.
 
 **Verified from a clean clone on 2026-09-16**, which is how #12 and #13 were found: `make check`
 was failing on the format step while `ruff check` alone reported success. Steps 1, 2 and 3 now

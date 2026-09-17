@@ -48,9 +48,14 @@ any misgrading rate in the wild.
 
 ```bash
 uv sync
-make check                              # ruff + pytest, fully offline, no API key
+python -m vaudit.tasks.chip8.fetch      # population + ROMs at pinned commits
+make check                              # 155 tests, offline, no API key
 python -m vaudit.audit.sweep --tasks 5  # prices a run; buys nothing without --confirm
 ```
+
+Run `make check` before fetching and you get 111 passed, 14 skipped: the adapter tests skip
+cleanly when the population is absent, so the suite can never pass while silently claiming a
+study that did not run.
 
 ## Origin
 
