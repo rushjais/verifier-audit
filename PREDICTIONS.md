@@ -380,6 +380,13 @@ threshold.
 
 # AMENDMENT 5 — ROM B accepted; Prediction 14 (2026-09-17)
 
+**Ordering, stated precisely.** ROM B's *design* was pre-registered in Amendment 3, which fixed
+its intent and constraint and explicitly deferred the bytes ("the data bytes depend on the
+assembled layout"). This amendment and ROM B's bytes landed in the **same commit**, so unlike
+ROMs A and the Amendment 6 family, the bytes were not committed after their own amendment. What
+*was* registered before being run is Prediction 14, which is the claim at risk. Recording the
+difference rather than implying a stricter sequence than happened.
+
 ROM B (`digit.ch8`, 34 bytes) is assembled and passes all four Amendment 3 gates: timer-free,
 sensitive to `memory_increments_i` and inert to the other four quirks, settled at frame 2, and
 reproduced by all seven third-party interpreters.

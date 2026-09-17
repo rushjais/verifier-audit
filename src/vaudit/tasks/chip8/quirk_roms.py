@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .core import COSMAC_VIP, Quirks
-from .harness import NativeInterpreter
+from .harness import WIDTH, NativeInterpreter
 
 # --- ROM A: the 8XY6 shift quirk, as registered -----------------------------------------------
 #
@@ -97,6 +97,28 @@ INDEX_ROM_SOURCE = """\
   sprite v1 v2 5
   loop again
 """
+
+
+def shift_rom(v1: int, v2: int) -> bytes:
+    """ROM A generalised: `V1 = v1`, `V2 = v2`, then 8126.
+
+    The VIP behaviour draws the glyph at `v2 >> 1`, CHIP-48 at `v1 >> 1`, so the pair sets the
+    displacement between the two correct renderings. Everything else — glyph, row, instruction
+    count — is identical to ROM A. Amendment 6 uses this to test whether SSIM's failure tracks
+    distance or block count.
+    """
+    if not (0 <= v1 <= 0xFF and 0 <= v2 <= 0xFF):
+        raise ValueError("register values must be bytes")
+    if not (v1 >> 1) < WIDTH - 4 or not (v2 >> 1) < WIDTH - 4:
+        raise ValueError("both glyph positions must fit on screen without clipping")
+    return bytes(
+        [0x61, v1, 0x62, v2, 0x81, 0x26, 0x60, 0x00, 0xF0, 0x29, 0x63, 0x00, 0xD1, 0x35, 0x12, 0x0E]
+    )
+
+
+def displacement(v1: int, v2: int) -> int:
+    return abs((v1 >> 1) - (v2 >> 1))
+
 
 SHIFT_TARGET = "shift_uses_vy"
 INDEX_TARGET = "memory_increments_i"

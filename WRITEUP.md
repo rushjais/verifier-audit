@@ -194,7 +194,9 @@ quirk: the COSMAC VIP shifts VY into VX, CHIP-48 and SUPER-CHIP shift VX in plac
 defensible and real interpreters do both. The ROM draws the font glyph `0` at an x position
 computed by that shift, so a correct interpreter draws the same 14 pixels at **x=4** or **x=8**.
 
-The seven third-party interpreters split **2 / 5** on it. Reference is `craigthomas`, the only
+The seven third-party interpreters produce **two distinct correct frames**, split 2 / 5. Seven
+implementations is not seven data points: on this ROM there are exactly two behaviours, and every
+number below is a comparison between those two frames. Reference is `craigthomas`, the only
 fully-clean member — the Mesen2 analogue.
 
 | candidate | exact | pixel proportion | thresholded τ=.05 | GMSD | SSIM |
@@ -207,6 +209,14 @@ fully-clean member — the Mesen2 analogue.
 
 **Pixel proportion, SSIM and GMSD all score the blank screen above the correct implementation.**
 Thresholded at τ=.05 accepts everything except inversion, including the blank screen.
+
+**What is new here and what is not.** The pixel-proportion result is a **replication**: GBA Eval
+reported exactly this ("an emulator that just renders a white screen scores above 99%"), and the
+only contribution is reproducing it on a different console with a quirk difference rather than a
+hypothetical. The GMSD inversion result is a **known property of the measure**, not a discovery —
+gradient magnitude is invariant under inversion by construction — though it does not appear to be
+noted in the grading-iteration post, which rejected GMSD for a different reason. The SSIM result
+is the one that is new, and only in the narrow sense given below.
 
 **The SSIM mechanism, because it is not a bug in my implementation.** Block SSIM over 8×8 blocks:
 moving the glyph four pixels disturbs **two** blocks — the one it left and the one it entered —
@@ -258,6 +268,47 @@ reported first. **GMSD** never separates, because a wholly inverted frame scores
 under it; its blindness is to inversion rather than to displacement, and no choice of ROM fixes
 it. **Thresholded at τ=.05** accepts the blank screen on both ROMs and so never separates either.
 
+#### Displacement magnitude: the score tracks block count, not distance
+
+Amendment 6 registered Prediction 15 before this family existed: if §3.6's mechanism is right,
+SSIM should **not** degrade monotonically with distance, because what matters is how many blocks
+the two glyph positions touch.
+
+| displacement | blocks touched | pixel proportion | SSIM | GMSD |
+| --- | --- | --- | --- | --- |
+| 0 (control) | 1 | 1.0000 | 1.0000 | 1.0000 |
+| 1 | 2 | 0.9922 | 0.9498 | 0.9113 |
+| 2 | 2 | 0.9902 | 0.9448 | 0.8925 |
+| 4 | 2 | 0.9863 | **0.9375** | 0.8492 |
+| 8 | 2 | 0.9863 | **0.9375** | 0.8219 |
+| 16 | 2 | 0.9863 | **0.9375** | 0.8219 |
+| 24 | 2 | 0.9863 | **0.9375** | 0.8219 |
+| blank screen | — | 0.9932 | 0.9688 | 0.8730 |
+
+**Prediction 15 holds.** SSIM is flat from displacement 4 onward — a 24-pixel shift scores
+identically to a 4-pixel one, six times the distance and no change in score. Pixel proportion
+behaves the same way and for the stated reason: it declines while the glyph positions still
+overlap, then goes constant once they separate. And SSIM sits below the blank screen at **every**
+non-zero displacement, so the failure is not an artefact of the magnitude first chosen.
+
+#### Sensitivity check: not an artefact of my implementation
+
+*Exploratory, run after the predictions above were registered and resolved.* My SSIM uses 8×8
+blocks, matching the post's description. scikit-image's default uses a 7×7 sliding window.
+
+| case | mine (8×8 blocks) | scikit-image default | same conclusion? |
+| --- | --- | --- | --- |
+| ROM A, displacement 4 | 0.9375 | 0.9581 | yes |
+| ROM A, displacement 24 | 0.9375 | 0.9403 | yes |
+| ROM B, substitution | 0.9943 | 0.9989 | yes |
+| blank screen | 0.9688 | 0.9735 | — |
+
+Every qualitative conclusion survives the swap: the divergent candidate scores below the blank
+screen on both ROM A cases and above it on ROM B, under both implementations. One difference worth
+recording — the sliding-window version **does** decline mildly with distance (0.9581 → 0.9403)
+where the block version is flat. So "block count, not distance" is exact for block pooling and
+approximate for window pooling; the qualitative failure holds for both.
+
 **The eligibility rule changes the conclusion** — the flip Amendment 4 said to report as the
 finding rather than resolve:
 
@@ -267,9 +318,14 @@ finding rather than resolve:
 | extended, n=7 | **none of the five** |
 
 Evaluated against a single reference, three of five strategies look sound. Evaluated over a
-population containing one legitimate variation, none do. **The failure is invisible at n=1**,
-which is the argument for `honest_pass` over a population stated as a measurement rather than an
-opinion.
+population containing one legitimate variation, none do.
+
+**This is expected by construction and is reported as a demonstration, not a discovery.** At n=1
+the population is the reference itself, which every strategy scores 1.0 by definition, so "no
+correct implementation is rejected" is vacuously true — there is only one and it is the yardstick.
+The flip is worth showing because the vacuity is not visible in the output: the n=1 table reads
+like a passing grade. It is the argument for measuring over a population made concrete, not
+evidence for it.
 
 **Two of four cheats were degenerate.** ROM A settles at frame 2, so `frozen_first_frame` and
 `one_frame_late` are byte-identical to the reference and uncatchable by anything. Amendment 4
@@ -287,8 +343,9 @@ replaced with cheats chosen after seeing the numbers.
 | 12 | SSIM ranks a correct interpreter below a structure-preserving cheat | **hit** — 0.9375 vs 0.9688 |
 | 13 | GMSD does not reproduce its reported failure; ranks like SSIM | **miss** — they agree on blank-vs-correct and disagree totally on inversion (1.0000 vs −0.0160). GMSD fails here, differently |
 | 14 | SSIM scores the divergence higher on ROM B than on ROM A (one disturbed block, not two) | **hit** — 0.9375 → 0.9943, clearing the blank screen and separating. Confirms the mechanism and scopes the finding to displacement |
+| 15 | SSIM does not degrade monotonically with displacement; 4px and 24px within 0.02 | **hit** — identical at 0.9375 for 4, 8, 16 and 24. Block count predicts the score; distance does not |
 
-Five evaluated, four hit, one missed. **#13 was registered as one I expected to get wrong**, and
+Six evaluated, five hit, one missed. **#13 was registered as one I expected to get wrong**, and
 it is the one that produced the sharper finding. **#14 was registered specifically so that a
 mechanism I had already published in §3.6 could be falsified** — it could have shown the
 explanation was wrong while the headline number stood. It did not, and the claim is narrower and

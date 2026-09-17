@@ -23,4 +23,8 @@ pythonpath = ["src"]
 markers = ["slow: hits the real sandbox repeatedly"]
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+    "scikit-image>=0.26.0",
+]
