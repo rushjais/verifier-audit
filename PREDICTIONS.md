@@ -124,3 +124,94 @@ Mitigations, all of which are obligations on the writeup and not optional:
 1 through 8 stand as written. The population they are evaluated over is now larger and weaker,
 which should if anything make the differential-grading failures *easier* to observe — so a null
 result under this rule is stronger evidence against the predictions, not weaker.
+
+---
+
+# AMENDMENT 2 — tightening Amendment 1, and the ROM set (2026-09-16)
+
+Written before any grading strategy exists or any metric has been run. Supersedes Amendment 1
+where they conflict.
+
+## Why Amendment 1 was too loose
+
+Amendment 1 let a non-self-verifying ROM (ibm-logo, chip8-logo, quirks) accept any interpreter
+that agreed with the consensus on the quirk-free controls. It named that as the weak point and
+it was: agreeing on ibm-logo does not show an interpreter is sound in the ways the quirks ROM
+probes, and the quirks ROM is the one the study turns on. The relaxation delivered n=4 on exactly
+the ROM where the evidence was thinnest, which is the wrong way round.
+
+## The rule, tightened
+
+1. **Per-ROM eligibility applies only to self-verifying ROMs** — those that render their own
+   pass/fail marks (corax+, flags). There the ROM adjudicates: zero failed tests that a peer
+   passes.
+2. **Non-verifying ROMs require a fully clean implementation** — zero failures across the whole
+   correctness suite. Proxy eligibility is withdrawn.
+3. **Timer-dependent ROMs are excluded entirely.** Timer semantics are not normalised across this
+   population and cannot be without rewriting the projects, so a ROM whose output depends on them
+   is not comparable here.
+
+## Both outcomes, reported
+
+| rule | corax+ | flags | ibm-logo | chip8-logo | quirks |
+|---|---|---|---|---|---|
+| original (global clean) | 1 | 1 | 1 | 1 | 1 |
+| Amendment 1 (proxy) | 2 | 1 | 4 | 4 | 4 |
+| **Amendment 2 (this one)** | **2** | **1** | **1** | **1** | **excluded** |
+
+(Counts exclude my own reference, which is the yardstick and not a population member.)
+
+## Confirming the quirks ROM — it does not qualify
+
+Required before running metrics, and the answer is no.
+
+`5-quirks.8o` contains nine delay-timer references, and they are not incidental: they implement a
+**frames-per-second detection routine** (lines 632–683, 745–761) that reads the delay timer in a
+loop to measure how fast the interpreter runs, in order to test the display-wait quirk. The ROM
+is therefore timer-dependent in the strongest possible sense — it is *measuring* timing.
+
+This population disagrees about timer semantics by construction: `craigthomas` decrements on
+demand, `wyattferguson` once per `cycle()`, `debugloop` every fifth cycle via a counter it never
+resets (so past the fifth, on every cycle), `islay` on demand. Under rule 3, **the quirks ROM is
+excluded.**
+
+## What that leaves, stated plainly
+
+No ROM currently has both an eligible population of n ≥ 2 **and** genuine disagreement within it:
+
+- corax+ has n=2, and those two (`craigthomas`, `wyattferguson`) produce **identical** frames.
+- every other ROM has n=1.
+
+So M1c as designed cannot run yet. That is a finding about the difficulty of the setup rather
+than a result about grading strategies, and it is recorded as such. It is not grounds for
+loosening the rule a second time; Amendment 1 already shows where that leads.
+
+## Pre-registered prediction for the quirks ROM
+
+Registered now so that if the ROM ever becomes usable — via interpreters whose timer semantics
+can be shown to agree, or a timer-free quirk ROM — the prediction predates the run.
+
+> **Prediction 9.** On a quirk-exercising ROM with an eligible population of n ≥ 3, exact-frame
+> matching against any single reference will accept at most one correct interpreter
+> (`honest_pass ≤ 1/n`), because quirk divergence changes what is drawn rather than how it looks.
+> SSIM will accept more than exact match but still fewer than all, for the same reason: it
+> repairs perceptual divergence, not semantic divergence.
+>
+> **Falsified if** exact match accepts two or more, or SSIM accepts every eligible interpreter.
+> **Confidence:** medium.
+
+## Pre-registered ROM set
+
+Fixed now; additions require a further dated amendment. Source: `Timendus/chip8-test-suite`
+@ `742e9eac`, GPL-3.0, fetched and never redistributed.
+
+| ROM | role | timer-dependent | self-verifying | in the study |
+|---|---|---|---|---|
+| 1-chip8-logo | quirk-free control | no | no | yes |
+| 2-ibm-logo | quirk-free control | no | no | yes |
+| 3-corax+ | correctness | no | yes | yes |
+| 4-flags | correctness | no | yes | yes |
+| 5-quirks | disagreement | **yes** | no | **excluded** |
+| 6-keypad | — | yes | yes | excluded: needs live input |
+| 7-beep | — | yes | no | excluded: audio, timer-dependent |
+| 8-scrolling | — | no | no | excluded: SUPER-CHIP only |
