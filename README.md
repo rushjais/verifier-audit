@@ -1,0 +1,59 @@
+# vaudit
+
+**Is this grader fair and deterministic, or only un-gameable?**
+
+A verifier used for RL or evaluation has to do three things: reject every cheat, accept every
+legitimate solution, and return the same verdict twice. Tooling exists for the first. This
+measures the other two.
+
+```
+4a  honest_pass  = accepted / |{s : oracle(s) = 1}|      correct work the grader accepts
+4e  catch_rate   = rejected / |{m : oracle(m) = 0}|      broken work the grader rejects
+4b  flake_rate   = unstable / |{submissions x m runs}|   verdicts that change on rerun
+4b-prime         does the grader's own harness exercise what the rollout exercises?
+4c               what does the grader assert that the prompt never made derivable?
+```
+
+`4a` and `4e` are deliberately the same shape — sensitivity and specificity against the oracle.
+Either is trivially maxed alone (accept everything, reject everything), so neither is ever
+reported without the other beside it. Every number carries the population it was computed over.
+
+None of these is a new idea. Screening a benchmark for over-specific tests is what human
+annotators did for SWE-bench Verified; flaky-test detection is an established field. What does
+not exist is the automated, per-grader combination, reported repeatably as a grader changes.
+
+## Results so far
+
+- **EvalPlus base graders miss 25–38% of genuinely broken mutants** on two of five of the
+  hardest tasks — deterministic, no API spend.
+- **A differential grader rejected 5 of 6 spec-faithful implementations** of a small replication
+  task, every rejection tracing to something the spec never determined (record type, summary
+  type, exception type, float precision). Labelled a pilot: the spec gap is authored, because
+  the auditor is what is under test.
+- **Null result, reported:** hardening cost nothing in legitimate work across 5 EvalPlus tasks.
+  Recorded rather than dropped.
+
+## Run it
+
+```bash
+uv sync
+make check                              # ruff + pytest, fully offline, no API key
+python -m vaudit.audit.sweep --tasks 5  # prices a run; buys nothing without --confirm
+```
+
+## Origin
+
+This began as my solo continuation of **Goodhart**, a two-day project from the HUD Frontier / RSI
+RL Environments hackathon (20–21 June 2026) built with [Advay Monga](https://github.com/advaymonga)
+and [rayan-arya](https://github.com/rayan-arya), which placed 9th of 71. My contribution there was
+the event bus, dashboard, and leaderboard frontend — not the verifier core.
+
+This repository shares no code with it. The sandbox, substrate loader, grader, and oracle are
+written from scratch here (and the sandbox drops the test-framework dependency the original had,
+which made every sandboxed run roughly ten times cheaper). Everything in `audit/`, `isolation.py`,
+and `tasks/` is mine. The original remains with its authors.
+
+One finding did come out of that work and is worth recording: the original sealed harness
+tampering by rebuilding its test suite from the task, but a candidate could still read the
+expected values out of the generated module's namespace. `isolation.py` closes that by putting a
+process boundary between the candidate and the answers — the child receives only the inputs.
