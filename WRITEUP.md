@@ -6,7 +6,7 @@
 > same verdict twice, and tests only what it told the candidate — not just whether it can be
 > cheated. It produced four modest numbers and one negative result: the headline study, comparing
 > five grading strategies on real third-party CHIP-8 interpreters, could not be run, for three
-> reasons each measured rather than guessed. The most useful section is §7 — fifteen times during
+> reasons each measured rather than guessed. The most useful section is §7 — sixteen times during
 > construction a measurement here was confidently about something other than what it claimed.
 
 **Authorship.** Built with Claude Code. I set the direction, made the scoping calls, reviewed the
@@ -227,14 +227,14 @@ same party that would write the metrics.
 
 ---
 
-## 7. Fifteen measurements that were about the wrong thing
+## 7. Sixteen measurements that were about the wrong thing
 
-Assembled while building an instrument to detect exactly this. **Thirteen were introduced by the
+Assembled while building an instrument to detect exactly this. **Fourteen were introduced by the
 model during this work**; #1 was in the original hackathon code, which all three of us wrote; #2
 is a property of git that nobody introduced and nobody noticed. The full list is Appendix A; what
 matters is that they fall into four patterns, and the patterns are the finding.
 
-### A. The check was not running (#2, #3, #4, #8, #12)
+### A. The check was not running, or did not stay true (#2, #3, #4, #8, #12, #16)
 
 The most common failure, and the most dangerous, because an inert check is indistinguishable from
 a passing one. `core.hooksPath` is local git config, so a clone has the hook files and no hook.
@@ -243,6 +243,11 @@ raised on macOS before any candidate ran, so every exploit scored 0 and every ex
 sealed. Fields were added to a dataclass and the table never updated, so a tightened eligibility
 rule did nothing. `ruff check` was run and reported success while `make check` — a superset — was
 failing.
+
+#16 is the variant worth naming separately: the check *ran and passed*, and the state later
+differed anyway. I still do not know whether the read was stale or something changed it, and
+saying so is more useful than picking the flattering explanation. A verification is a claim about
+one moment; treating it as a standing property is its own error.
 
 **What distinguishes these: the system was quieter than before, not louder.** Nothing errored.
 A sealed exploit, a green gate and a passing suite all look like progress.
@@ -370,6 +375,7 @@ both hold, and both turned out stronger than the draft claimed.
 | 12 ▲ | "all checks passed" | `ruff check` is lint only; `make check` also runs `ruff format --check`, which was failing | running the documented reproduce command from a clean clone |
 | 13 ▲ | quoted third-party source was verbatim | `ruff format` rewrote the quotes (`0xff` → `0xFF`) in evidence cited against those projects | reading the diff the formatter produced |
 | 14 ▲ | "`make check` — 155 tests" | in the documented order it is 111 passed, 14 skipped; the population has to be fetched first | running the steps as written, in the order written |
+| 16 ▲ | "pushed private" — I passed `--private` and the check immediately after printed `private` | the repository was public ~5 minutes later; cause unestablished, either a stale read or a change I did not make | listing the account's repositories for an unrelated reason |
 | 15 ▲ | "the sweep command reproduces §3.1 and §3.2 here" | true of §3.1, false of §3.2 — the clean-room rewrite dropped the hardening track, so this repo cannot produce that number at all | checking what the shipped sweep actually measures before running it |
 
 #12, #13 and #14 were found by running §9's commands from a clean clone, which is why that is now part
