@@ -135,3 +135,40 @@ def test_the_key_stub_models_pygames_actual_contract():
     assert len({getattr(pygame, n) for n in ("K_x", "K_1", "K_2", "K_q")}) == 4, (
         "key constants must be distinct or sixteen keys collapse into one"
     )
+
+
+@needs_population
+def test_no_test_rom_uses_cxnn_so_rng_cannot_affect_any_comparison():
+    """CXNN is CHIP-8's only nondeterminism. If a ROM used it, every interpreter would need an
+    identically seeded PRNG or the comparison would be measuring luck. None of them do, and this
+    test fails loudly if that ever changes."""
+    from vaudit.tasks.chip8.roms import ROM_DIR, usable_roms
+
+    for rom in usable_roms():
+        source = ROM_DIR / "src" / "tests" / rom.filename.replace(".ch8", ".8o")
+        if source.exists():
+            assert "random" not in source.read_text().lower(), f"{rom.key} now uses CXNN"
+
+
+@needs_population
+def test_the_correctness_gate_decides_eligibility_by_the_roms_verdict_not_by_agreement():
+    """Differing from my reference is not being wrong; the ROM's own marks decide."""
+    from vaudit.tasks.chip8.adjudicate import failures_against_peers
+    from vaudit.tasks.chip8.roms import BY_KEY
+
+    interps = {"reference": NativeInterpreter("r", COSMAC_VIP)}
+    interps.update({e.key: build(e, path_for(e)) for e in _fetched})
+
+    failures = {}
+    for rom_key in ("corax", "flags"):
+        rom = BY_KEY[rom_key]
+        frames = {n: i.frames(rom.load(), 90)[-1] for n, i in interps.items()}
+        for name, count in failures_against_peers(frames).items():
+            failures[name] = failures.get(name, 0) + count
+
+    # The reference must itself be clean, or the study is built on a broken yardstick.
+    assert failures["reference"] == 0, f"the reference fails the suite: {failures}"
+    # And the gate must actually discriminate, or it is not a gate.
+    assert any(v > 0 for k, v in failures.items() if k != "reference"), (
+        "no interpreter failed anything; the gate is not doing its job"
+    )
