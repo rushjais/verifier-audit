@@ -277,7 +277,7 @@ rates. Hard line between *model lacked a capability* and *grader was unfair*: a 
 because the grader was wrong is an M1 finding, not a capability finding. Keeping that line clean is
 most of the document's value.
 
-Write it in the `STATE-OF-TELOS.md` voice — dated amendments that overturn earlier claims, an
+Write it in an engineering-log voice — dated amendments that overturn earlier claims, an
 explicit rejected-hypotheses section, a population predicate on every number.
 
 ---
@@ -315,7 +315,7 @@ Carried from `SPEC.md` §3b. These are the reason anyone should believe the numb
 4. **Every robustness number ships with `honest_pass` beside it.**
 5. **Every fairness finding ships with a runnable repro.**
 6. **Every number states its population**: `count = … where <predicate>`. Your own standing rule
-   from Telos, after five separate miscount incidents.
+   carried over from a production system I maintain, adopted after several miscount incidents.
 7. **Report the failures.** Families with a zero hit rate, graders you couldn't harden, tasks
    dropped and why. And keep a rejected-hypotheses list.
 8. **No claim before a run.** Judge injection is a hypothesis until measured (§7).
@@ -325,5 +325,5 @@ Carried from `SPEC.md` §3b. These are the reason anyone should believe the numb
 ## 11. Positioning and outreach
 
 Kept out of the repo deliberately — see `POSITIONING.md`, which is gitignored. It holds the
-career framing, the Telos comparison, and the outreach plan. None of that is technical content
+career framing and positioning notes. None of that is technical content
 and none of it belongs in a public repository.
