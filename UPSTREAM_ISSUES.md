@@ -10,6 +10,15 @@ submitted, minus the suggested-fix blocks that were dropped before filing.
 | `IslayLaphroaig/CHIP-8` | https://github.com/IslayLaphroaig/CHIP-8/issues/1 |
 | `cwithmichael/chip8_py` | https://github.com/cwithmichael/chip8_py/issues/2 |
 
+A second, unrelated defect was verified later the same day in two of them — sprite rows spilling
+onto the next scanline, from a linear framebuffer index — and filed separately, since the two bugs
+share nothing:
+
+| repo | issue |
+| --- | --- |
+| `robertolaru/chip8py` | https://github.com/robertolaru/chip8py/issues/2 |
+| `cwithmichael/chip8_py` | https://github.com/cwithmichael/chip8_py/issues/3 |
+
 `wyattferguson/chip8-emulator` and `debugloop/chip8` have issues disabled and could not be
 filed. Their defects are recorded in `ADAPTERS.md` and remain unreported upstream.
 
