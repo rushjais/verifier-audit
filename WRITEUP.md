@@ -4,10 +4,11 @@
 
 > **TL;DR.** Built an instrument that measures whether a grader accepts correct work, returns the
 > same verdict twice, and tests only what it told the candidate — not just whether it can be
-> cheated. It produced four modest numbers and one negative result: the headline study, comparing
-> five grading strategies on real third-party CHIP-8 interpreters, could not be run, for three
-> reasons each measured rather than guessed. The most useful section is §7 — sixteen times during
-> construction a measurement here was confidently about something other than what it claimed.
+> cheated. Its sharpest result: on an authored 16-byte ROM isolating one documented CHIP-8 quirk,
+> **pixel proportion, SSIM and GMSD all rank a blank screen above a correct implementation** that
+> differs only on that quirk — and the failure is invisible when measured against a single
+> reference. §7 is the other half: sixteen times during construction a measurement here was
+> confidently about something other than what it claimed.
 
 **Authorship.** Built with Claude Code. I set the direction, made the scoping calls, reviewed the
 output, and pushed back on it — including the two eligibility amendments and the decision not to
@@ -37,9 +38,16 @@ Those are `4c` and `4a`. The problem is understood and the criteria are settled;
 is a version that does not cost 93 people and cannot be re-run when a grader changes. That is the
 gap this instrument aims at, and the honest framing of its contribution.
 
-Four numbers came out of this, all modest and all scoped in §3: a mutation catch rate below 1.0 on
-2 of 5 EvalPlus tasks; a null result on hardening; a 1-in-6 honest-pass on an authored replication
-task; and 1 of 7 CHIP-8 interpreters passing a reference suite.
+**The sharpest result is §3.6.** On a 16-byte ROM isolating one documented CHIP-8 quirk, three of
+the five grading strategies GBA Eval worked through — pixel proportion, SSIM and GMSD — score a
+**blank screen above a correct implementation** that differs only on that quirk. For SSIM the
+mechanism is mechanical: moving a glyph disturbs two blocks, erasing it disturbs one. And the
+failure is **invisible at n=1**: against a single reference, three of five strategies separate
+cleanly; over a population of seven containing one legitimate variation, none do.
+
+Four further numbers, all modest and all scoped in §3: a mutation catch rate below 1.0 on 2 of 5
+EvalPlus tasks; a null result on hardening; a 1-in-6 honest-pass on an authored replication task;
+and 1 of 7 CHIP-8 interpreters passing a reference suite.
 
 ---
 
@@ -176,13 +184,83 @@ now traced to a line in their own source (`ADAPTERS.md`).
 What this supports is narrow: **when choosing a reference implementation for differential grading,
 correctness cannot be assumed from the fact that something is a working, published interpreter.**
 
+### 3.6 All five grading strategies rank a blank screen above a correct implementation
+
+The study §4 previously said could not be run. It runs on one ROM.
+
+**Setup.** `shift.ch8` (16 bytes, authored, pre-registered in Amendment 3 before the bytes
+existed, accepted against four gates before any strategy touched it). It isolates the `8XY6`
+quirk: the COSMAC VIP shifts VY into VX, CHIP-48 and SUPER-CHIP shift VX in place. Both are
+defensible and real interpreters do both. The ROM draws the font glyph `0` at an x position
+computed by that shift, so a correct interpreter draws the same 14 pixels at **x=4** or **x=8**.
+
+The seven third-party interpreters split **2 / 5** on it. Reference is `craigthomas`, the only
+fully-clean member — the Mesen2 analogue.
+
+| candidate | exact | pixel proportion | thresholded τ=.05 | GMSD | SSIM |
+| --- | --- | --- | --- | --- | --- |
+| `craigthomas` (VIP) — reference | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
+| `robertolaru` (VIP) | 1.0000 | 1.0000 | 1.0000 | 1.0000 | 1.0000 |
+| 5 × CHIP-48 behaviour — **correct** | 0.0000 | 0.9863 | 1.0000 | 0.8492 | **0.9375** |
+| CHEAT: blank screen | 0.0000 | **0.9932** | 1.0000 | **0.8730** | **0.9688** |
+| CHEAT: inverted palette | 0.0000 | 0.0000 | 0.0000 | **1.0000** | −0.0160 |
+
+**Pixel proportion, SSIM and GMSD all score the blank screen above the correct implementation.**
+Thresholded at τ=.05 accepts everything except inversion, including the blank screen.
+
+**The SSIM mechanism, because it is not a bug in my implementation.** Block SSIM over 8×8 blocks:
+moving the glyph four pixels disturbs **two** blocks — the one it left and the one it entered —
+while erasing it entirely disturbs **one**. A metric that pools over blocks therefore penalises
+relocation more than deletion. That is a property of the measure, not of this ROM.
+
+**Scope, and this matters.** GBA Eval runs SSIM on 240×160 colour frames of real games, where a
+sprite displacement disturbs a very different fraction of the image than a 14-pixel glyph does on
+a 64×32 monochrome display. **This is not a claim that their grader mis-ranks their submissions.**
+It is a demonstration that the metric they settled on has a regime where it does, that the regime
+is reachable with a legitimate quirk difference, and that nothing in the metric announces when you
+are in it. Whether their frames sit in that regime is measurable, and is not measured here.
+
+**GMSD scores a wholly inverted frame at exactly 1.0000.** Gradient magnitude is invariant under
+inversion — |∇(1−x)| = |∇x| — so every edge is in the same place and the metric reports perfect
+similarity for an image wrong in every pixel. Explainable, reproducible, and fatal as a grader.
+
+**The eligibility rule changes the conclusion** — the flip Amendment 4 said to report as the
+finding rather than resolve:
+
+| | separating threshold exists? |
+| --- | --- |
+| strict, n=1 (`craigthomas` alone) | exact match ✓, pixel proportion ✓, SSIM ✓ |
+| extended, n=7 | **none of the five** |
+
+Evaluated against a single reference, three of five strategies look sound. Evaluated over a
+population containing one legitimate variation, none do. **The failure is invisible at n=1**,
+which is the argument for `honest_pass` over a population stated as a measurement rather than an
+opinion.
+
+**Two of four cheats were degenerate.** ROM A settles at frame 2, so `frozen_first_frame` and
+`one_frame_late` are byte-identical to the reference and uncatchable by anything. Amendment 4
+named that possibility before the run; they are excluded from separation and reported, not
+replaced with cheats chosen after seeing the numbers.
+
+### 3.7 Prediction scorecard
+
+| # | prediction | outcome |
+| --- | --- | --- |
+| 1–8 | the EvalPlus and replication-task predictions | superseded by Amendments 2–4; not evaluated |
+| 9 | quirks ROM with n ≥ 3 | **unrun** — that ROM is timer-dependent and excluded |
+| 10 | exact match accepts only the reference's quirk; `honest_pass` < 1.0 | **hit** — 2/7 |
+| 11 | pixel proportion: both scores > 0.98, no separating threshold | **hit**, and the figures landed where predicted (0.9863 / 0.9932) |
+| 12 | SSIM ranks a correct interpreter below a structure-preserving cheat | **hit** — 0.9375 vs 0.9688 |
+| 13 | GMSD does not reproduce its reported failure; ranks like SSIM | **miss** — they agree on blank-vs-correct and disagree totally on inversion (1.0000 vs −0.0160). GMSD fails here, differently |
+
+Four evaluated, three hit, one missed. **#13 was registered as one I expected to get wrong**, and
+it is the one that produced the sharper finding.
+
 ---
 
-## 4. The study that could not be run
+## 4. What still could not be run
 
-The centrepiece was to reproduce GBA Eval's five grading strategies — exact match, pixel
-proportion, thresholded, GMSD, SSIM — as a table of numbers, by measuring how each ranks
-correct-but-different CHIP-8 interpreters. Three obstacles, each measured:
+§3.6 is that comparison, on one authored ROM. What remains blocked, and why — each measured:
 
 1. **Correct implementations are rare in this sample.** 1 of 7 (§3.5). A population of one supports
    neither `honest_pass` over a population nor rotating the reference.
@@ -197,7 +275,8 @@ correct-but-different CHIP-8 interpreters. Three obstacles, each measured:
    documented quirk flags change the display on any of them. **Games were not tried** — a real
    game that depends on a quirk would very likely show the difference, and that is untested.
 
-**Predictions 1–9 are unrun**, standing pre-registered and unresolved rather than dropped. The
+**Prediction 9 is unrun** and stands pre-registered and unresolved rather than dropped; 10–13
+were evaluated in §3.7. The
 eligibility rule was amended twice, both before any metric existed, both recorded with reasoning —
 including that Amendment 1 was made *after* the strict rule returned an unusable answer, by the
 same party that would write the metrics.
@@ -214,6 +293,10 @@ same party that would write the metrics.
    text, producing a uniform false `err=8` for every interpreter including the reference.
 5. **Forcing the quirks ROM's platform removes its timer dependence.** No.
 6. **Third-party quirk flags substitute for a quirk-exercising ROM.** No.
+7. **GMSD behaves like SSIM on a monochrome display** (Prediction 13). No — it scores a wholly
+   inverted frame at 1.0000, because gradient magnitude is invariant under inversion.
+8. **A grading strategy can be evaluated against a single reference.** No. Three of five separate
+   cleanly at n=1 and none do at n=7; the reference-only evaluation says nothing.
 
 ## 6. Limitations
 
@@ -224,6 +307,12 @@ same party that would write the metrics.
 - `4c` ran only as a hand-verified pilot; `4b′` is an instrumentation helper plus a checklist
   demonstrated on two graders, not a generic checker.
 - Games were never tried as quirk-exercising ROMs (§4.3).
+- §3.6 runs on **one authored 16-byte ROM** and one quirk, with a 14-pixel glyph on a 64×32
+  monochrome display. GBA Eval's frames are 240×160 and in colour, where the same displacement
+  disturbs a different fraction of the image. The finding is that the regime exists and is
+  reachable by a legitimate quirk difference, not that their grader mis-ranks their submissions.
+- ROM B was never assembled, so §3.6 has one divergence magnitude, not two. A larger structural
+  difference might separate where a four-pixel shift does not, and that is untested.
 
 ---
 
