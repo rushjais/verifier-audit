@@ -64,3 +64,63 @@ rate at one arbitrary threshold avoids smuggling in the answer through the thres
 - If k < 5 usable interpreters can be found under permissive licences, say so and report the
   smaller n rather than padding the population with implementations I wrote.
 - The cheat submissions are mine and are labelled as mine everywhere they appear.
+
+---
+
+# AMENDMENT 1 — per-ROM eligibility (2026-09-16)
+
+**Written before any grading strategy exists or any metric has been run.** Commit order is the
+evidence, as with the original.
+
+## What changed
+
+Eligibility for the correct-implementation population was global: an interpreter had to pass the
+whole correctness suite. It is now **per-ROM**: an interpreter is eligible for the comparison on
+ROM X if it is correct *for what ROM X exercises*.
+
+## Why, and the part that should make you suspicious
+
+Four independently written third-party interpreters were adapted. By the suite's own verdict:
+`craigthomas` 0 failures, `wyattferguson` 8, `islay` 18, `debugloop` 18. Under the global rule
+the eligible population was **1**, which cannot support honest-pass over a population and cannot
+support rotating the reference. The study could not run.
+
+So this change was made *after* the strict rule returned an unusable answer, by the same person
+who will write the metrics. That is the shape of a rationalisation whether or not it is one, and
+it is why this is written down before anything is measured rather than explained afterwards.
+
+The argument that it is nevertheless correct: **correctness is relative to what is being
+tested.** An interpreter with a vF bug is entirely correct for a ROM that never touches vF, and
+GBA Eval would not discard an emulator's video score over an audio fault. The question this study
+asks — do grading strategies rank correct-but-different implementations sensibly — is a question
+about a specific ROM's output, so the correctness that matters is correctness on that ROM.
+
+## The rule
+
+- **ROM reports its own verdict** (corax+, flags): eligible iff zero failed tests that a peer
+  passes. The ROM adjudicates; my reference does not.
+- **ROM reports nothing** (ibm-logo, chip8-logo, quirks): eligible iff the interpreter agrees
+  with the consensus on the quirk-free control ROMs, i.e. its core execution is demonstrably
+  sound. A ROM without self-reported verdicts cannot adjudicate itself.
+
+## What this costs, stated plainly
+
+The second clause is **weaker than it looks, and weakest exactly where it matters most**. An
+interpreter can agree on ibm-logo and still be buggy in a way the quirks ROM would expose — and
+the quirks ROM is the one the whole study turns on. So a disagreement there may be a legitimate
+quirk choice or may be a bug, and this rule cannot tell them apart.
+
+Mitigations, all of which are obligations on the writeup and not optional:
+
+1. Every result table carries each interpreter's **global** failure count beside its per-ROM
+   eligibility, so nothing is hidden behind the relaxation.
+2. Any headline claim resting on the quirks ROM is reported with the caveat that its population
+   is eligible-by-proxy, not eligible-by-verdict.
+3. If a strategy's ranking flips depending on which rule is used, that is reported as the
+   finding, not resolved by picking the friendlier one.
+
+## Predictions this does not change
+
+1 through 8 stand as written. The population they are evaluated over is now larger and weaker,
+which should if anything make the differential-grading failures *easier* to observe — so a null
+result under this rule is stronger evidence against the predictions, not weaker.
