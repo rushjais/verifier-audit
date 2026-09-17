@@ -24,6 +24,12 @@ not exist is the automated, per-grader combination, reported repeatably as a gra
 
 ## Results so far
 
+**Scope note.** The numbers below describe *this sample*: seven Python CHIP-8 interpreters found
+by GitHub search, permissively licensed and adaptable to a headless harness. They are not a random
+sample of interpreters, not a claim about interpreters in other languages, and not an estimate of
+any misgrading rate in the wild.
+
+
 - **EvalPlus base graders miss 25–38% of genuinely broken mutants** on two of five of the
   hardest tasks — deterministic, no API spend.
 - **A differential grader rejected 5 of 6 spec-faithful implementations** of a small replication
@@ -32,6 +38,11 @@ not exist is the automated, per-grader combination, reported repeatably as a gra
   the auditor is what is under test.
 - **Null result, reported:** hardening cost nothing in legitimate work across 5 EvalPlus tasks.
   Recorded rather than dropped.
+- **One of seven** interpreters in this sample passes the reference correctness suite
+  (`Timendus/chip8-test-suite`). Four of the six failures are traced to specific lines in their
+  own source (`ADAPTERS.md`); two are untraced and marked as such. What this supports is narrow:
+  *when picking a reference implementation for differential grading, correctness cannot be
+  assumed from the fact that something is a working, published interpreter.* It is not a rate.
 
 ## Run it
 

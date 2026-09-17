@@ -77,3 +77,62 @@ pacing is not safely comparable across this population.**
 | **No stubbing of any kind** | — | No GUI dependency. | — |
 | `load_data("font_set", 0)` then the ROM at 512 | setup | Their `main.py` does exactly this. | **[tested]** glyph matches the reference |
 | `update_timers()` once per frame | setup | Their `main.py` does it per frame. | **[tested]** the delay timer advances |
+
+---
+
+# Why each interpreter fails — their code, not the adapter
+
+The headline observation rests on six interpreters failing the correctness suite, so each failure
+has to be traceable to *their* source rather than to something the adapter did. Line numbers are
+at the pinned commits. Four of six are traced; the remaining two are marked honestly as untraced.
+
+All six draw exactly 230 lit pixels on the ibm-logo control, identical to the reference and to
+each other — so the adapters run them correctly. What follows are defects in the interpreters.
+
+### wyattferguson — `chip8/cpu.py:157-160`
+
+```python
+def _store_vx_result(self, value: int) -> None:
+    self.v[CARRY_FLAG] = value >= 0
+    self.v[self.x] = value % MAX_8BIT
+```
+
+Three defects in four lines. `MAX_8BIT` is 255, so `% MAX_8BIT` wraps at 255 rather than 256 and
+a legitimate result of 255 becomes 0. `add_vx_vy` passes `total - MAX_8BIT`, so carry is flagged
+when the total is ≥ 255 rather than > 255. And VF is written *before* VX, so when `x == 0xF` the
+store clobbers the flag — exactly the "can vF be used as the vX input" case the flags test checks.
+
+### robertolaru — `cpu.py:256-261`
+
+```python
+res = (self.v[vx] + self.v[vy]) & 0xff
+self.v[vx] = res
+if res > 0xff:
+    self.v[0xf] = 1
+```
+
+`res` is masked to 8 bits on the line above, so `res > 0xff` can never be true. The carry branch
+is dead code and VF is always 0.
+
+### debugloop — `emu.py:112-114`
+
+```python
+result = self.v[...] + self.v[...]
+self.v[0xf] = result & 0xf0000
+self.v[...] = result & 0xffff
+```
+
+An 8-bit addition maxes at 510 (`0x1FE`), so `& 0xf0000` is always 0 and VF is never set. The
+result is then masked to 16 bits rather than 8, leaving Vx untruncated.
+
+### cwithmichael — `cpu.py:172-176`
+
+The carry test itself is correct (`v[y] > 0xFF - v[x]`), but VF is assigned *before* the addition
+is stored. When VF is the destination or an operand the sum overwrites the flag — the same
+vF-as-operand case as wyattferguson, arrived at independently.
+
+### islay, rudzen — untraced
+
+Both fail the suite (18 and 14 respectively) and both pass the ibm-logo control. The specific
+lines have not been identified, and that is recorded rather than assumed: their failures support
+the observation only as far as "the suite reports failures", not as a diagnosed defect.
