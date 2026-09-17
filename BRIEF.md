@@ -48,7 +48,9 @@ What does not exist is the **combination, automated and per-grader**: one comman
 fairness beside robustness for a specific verifier, repeatably, as it changes. And the SWE-bench
 Verified precedent cuts in our favour on value even as it cuts against novelty — the current
 state of the art being expensive one-shot human annotation is the argument for automating it.
-A real literature search goes before publication, not after.
+That search has now been done — see `LITERATURE.md`. It found substantial prior art for every
+check, including the one §3.6 rests on, and the claims above are weaker than they read. Read the
+literature review before quoting anything from this document.
 
 ## The same argument in the field's own economics
 

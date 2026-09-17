@@ -38,6 +38,17 @@ Those are `4c` and `4a`. The problem is understood and the criteria are settled;
 is a version that does not cost 93 people and cannot be re-run when a grader changes. That is the
 gap this instrument aims at, and the honest framing of its contribution.
 
+**Read `LITERATURE.md` first.** The search `BRIEF.md` promised was done on 2026-09-17 and it went
+badly for the novelty claims. `catch_rate` is the **mutation score**, a test-adequacy metric from
+1977 with 390+ publications catalogued by 2009, and its equivalent-mutant filter is a known
+NP-complete problem. `honest_pass` is measured in the autograding literature, which reports
+**56–64% false-negative rates** and names the exact mechanism §3.3 demonstrates. And SSIM's
+sensitivity to spatial translation — the whole basis of §3.6 — is a documented drawback with a
+purpose-built fix, **CW-SSIM** (Wang and Simoncelli, 2005).
+
+None of the four checks is novel. What survives is in `LITERATURE.md` § What survives, and the
+most original section of this document is §7, not §3.
+
 **The sharpest result is §3.6.** On a 16-byte ROM isolating one documented CHIP-8 quirk, three of
 the five grading strategies GBA Eval worked through — pixel proportion, SSIM and GMSD — score a
 **blank screen above a correct implementation** that differs only on that quirk. For SSIM the
@@ -109,7 +120,9 @@ that section.
 result is: *three missed mutants across five tasks*, on a capped sample of 8 mutants per task. That
 is a demonstration that the check works and finds something, not a measurement of grader strength.
 
-This **replicates the motivation for EvalPlus itself** and does not extend it. EvalPlus exists
+This is the **mutation score** from mutation testing (1977), applied to a grader instead of a
+test suite; the filter for behaviourally-identical mutants is the known equivalent-mutant problem.
+It also **replicates the motivation for EvalPlus itself** and does not extend it. EvalPlus exists
 because "test-cases can be limited in both quantity and quality for fully assessing the functional
 correctness of the generated code"; it adds **80×** more tests than original HumanEval and reports
 that doing so reduces "the pass@k by up-to 19.3-28.9%". Measured against that, three missed
@@ -249,6 +262,12 @@ rather than two.
 | GMSD | 0.8492 ✗ | 0.9331 ✗ | 0.8977 · *inverted scores 1.0000* |
 | exact match | 0.0000 ✗ | 0.0000 ✗ | 0.0000 |
 | separates at n=7? | **none of the five** | pixel proportion ✓, SSIM ✓ | — |
+
+**Prior art, stated before the result.** SSIM's sensitivity to small translations is documented in
+the image-quality literature and CW-SSIM exists specifically to fix it. The mechanism below is
+therefore textbook, and Predictions 12, 14, 15 and 16 confirm a published property in a new
+setting rather than discovering one. What is not in that literature is the *consequence* for a
+reference-based grader: that it ranks a correct implementation below a blank screen.
 
 **Prediction 14 holds, and it corrects the headline.** SSIM does not fail on structural difference
 in general: it rises from 0.9375 to 0.9943 and now clears the blank screen, separating cleanly.
