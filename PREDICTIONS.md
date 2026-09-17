@@ -215,3 +215,117 @@ Fixed now; additions require a further dated amendment. Source: `Timendus/chip8-
 | 6-keypad | — | yes | yes | excluded: needs live input |
 | 7-beep | — | yes | no | excluded: audio, timer-dependent |
 | 8-scrolling | — | no | no | excluded: SUPER-CHIP only |
+
+---
+
+# AMENDMENT 3 — an authored quirk ROM, pre-registered (2026-09-17)
+
+**Written before any ROM bytes exist.** The commit that adds `src/vaudit/tasks/chip8/quirk_roms.py`
+must be later than this one; commit order is the evidence, as with Amendments 1 and 2.
+
+## Why authoring a ROM is legitimate, and where the line is
+
+The population must stay third-party — that rule is not being relaxed. A ROM is not a population
+member; it is an **input**. The interpreters are what is measured; the ROM is what they are
+measured *on*. GBA Eval chooses which games to replay, and choosing an input is not the same as
+authoring the subject.
+
+The real risk is different and worth naming: **an input can be tuned until a chosen strategy
+fails.** Three guards, all checkable from the git history:
+
+1. This document fixes the design before the bytes exist.
+2. The ROM is accepted or rejected against criteria stated below (§ Acceptance), **before any
+   grading strategy is run on it**.
+3. Once any strategy has been run, the ROM is frozen. Changing it afterwards voids the study and
+   requires a new amendment saying so.
+
+The `.8o` source ships beside the bytes so anyone can read what it does.
+
+## ROM A — `shift.ch8` — a small, localised divergence
+
+Isolates the `8XY6` shift quirk. The COSMAC VIP shifts VY into VX; CHIP-48 and SUPER-CHIP shift
+VX in place. Both are defensible and real interpreters do both.
+
+```text
+0x200  6110   V1 = 0x10
+0x202  6208   V2 = 0x08
+0x204  8126   V1 = shift      ; VIP: V1 = V2>>1 = 4    CHIP-48: V1 = V1>>1 = 8
+0x206  6000   V0 = 0          ; digit 0
+0x208  F029   I  = font(V0)   ; portable: asks the interpreter for its own font address
+0x20A  6300   V3 = 0
+0x20C  D135   draw glyph at (V1, V3), 5 rows
+0x20E  120E   jump self
+```
+
+Expected divergence: the 14-pixel glyph is drawn at **x=4** or **x=8** — a four-pixel horizontal
+shift. Roughly 28 of 2048 pixels differ; nothing else on the display changes.
+
+## ROM B — `digit.ch8` — a larger, structural divergence
+
+Isolates the `FX55`/`FX65` index quirk: whether `I` is left advanced after a block store/load.
+After a store, a subsequent load reads from a different address under each behaviour, yielding a
+**different digit glyph** rather than the same glyph moved.
+
+Exact opcodes are not fixed here because the data bytes depend on the assembled layout. What *is*
+fixed: the ROM must differ **only** in which digit is rendered, at a single fixed position, with
+both digits drawn from the interpreter's own font via `FX29`.
+
+## Acceptance — the ROMs must pass this before any strategy is run
+
+A ROM enters the study only if all four hold. Failing any one means it is rewritten or abandoned,
+and that is recorded.
+
+1. **Timer-free.** Identical final frame with timer ticks enabled and disabled (the check that
+   excluded `5-quirks.ch8` under Amendment 2 rule 3).
+2. **Quirk-sensitive in exactly one dimension.** Flipping the target quirk changes the frame;
+   flipping each of the other four does not.
+3. **Settled.** The frame is stable from some frame count onward, so the result does not depend
+   on how long it is run.
+4. **Real on third-party interpreters.** At least two population members, differing on the target
+   quirk, reproduce the predicted divergence. A ROM that only works on my own reference is a ROM
+   that tests my reference.
+
+## Predictions
+
+Registered now. Prediction 9 (Amendment 2) stands unchanged and is evaluated on these ROMs.
+
+> **Prediction 10 — exact match.** On ROM A, exact frame matching accepts only interpreters whose
+> shift behaviour matches the reference's, so `honest_pass` equals the fraction of the eligible
+> population sharing the reference's quirk — and is strictly below 1.0 whenever the population
+> contains both behaviours.
+> **Falsified if** exact match accepts an interpreter with the opposing quirk.
+> **Confidence:** high — this is close to definitional, and it is registered mainly as a check
+> that the harness is wired correctly.
+
+> **Prediction 11 — pixel proportion discriminates nothing here.** A four-pixel shift of a
+> 14-pixel glyph leaves ~28 of 2048 pixels differing, so the proportion-of-correct-pixels score
+> for a correct-but-divergent interpreter is **> 0.98**. A blank screen also scores **> 0.98**,
+> because the display is mostly off. **No threshold separates the two.**
+> **Falsified if** some threshold accepts every correct interpreter and rejects the blank cheat.
+> **Confidence:** high for the two scores; medium for "no threshold separates", which depends on
+> the cheat set.
+
+> **Prediction 12 — SSIM rejects a correct interpreter on ROM A.** A four-pixel shift moves
+> structure, not just intensity, so SSIM scores it well below the near-1.0 it gives a
+> perceptually-identical frame. SSIM will therefore rank a correct-but-divergent interpreter as
+> worse than at least one cheat that leaves structure intact.
+> **Falsified if** SSIM scores the shifted glyph above every cheat.
+> **Confidence:** medium. This is the prediction the study exists to test — it is Prediction 8's
+> claim that perceptual metrics repair perceptual divergence but not semantic divergence.
+
+> **Prediction 13 — GMSD does not reproduce its reported failure here.** GBA Eval's GMSD problem
+> was sparse single-pixel noise pooled by standard deviation. A 64×32 monochrome display has no
+> antialiasing regime to produce that, so GMSD and SSIM should rank these candidates nearly
+> identically.
+> **Falsified if** GMSD and SSIM disagree on the ordering by more than one position.
+> **Confidence:** medium-low. Registered because I expect to be wrong, and saying so beforehand
+> costs nothing.
+
+## Reporting rules
+
+- Every prediction gets **hit / miss / inconclusive**, misses at the same prominence as hits.
+- Counts beside rates; `honest_pass = 2/4` is a number, `0.5` alone is not.
+- Each result states the eligible population for that ROM and each member's global failure count
+  (Amendment 1, obligation 1).
+- If ROM B cannot be assembled to satisfy Acceptance, the study runs on ROM A alone with n
+  reported, rather than being widened until something works.
