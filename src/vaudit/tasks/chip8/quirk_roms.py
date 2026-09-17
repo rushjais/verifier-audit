@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .core import CHIP48, COSMAC_VIP, Quirks
+from .core import COSMAC_VIP, Quirks
 from .harness import NativeInterpreter
 
 # --- ROM A: the 8XY6 shift quirk, as registered -----------------------------------------------
@@ -44,8 +44,63 @@ SHIFT_ROM_SOURCE = """\
   loop again
 """
 
-TARGET_QUIRK = "shift_uses_vy"
-OTHER_QUIRKS = ("memory_increments_i", "jump_uses_vx", "vf_reset", "sprites_wrap")
+# --- ROM B: the FX55/FX65 index quirk, per Amendment 3 ----------------------------------------
+#
+#   0x200  A220   I = 0x220          ; data area inside the ROM image
+#   0x202  6000   V0 = 0
+#   0x204  F055   store V0 at I      ; VIP: I becomes 0x221.  CHIP-48: I stays 0x220.
+#   0x206  F065   load  V0 from I    ; VIP reads 0x221 (= 3). CHIP-48 reads 0x220 (= 0, just stored)
+#   0x208  F029   I = font(V0)
+#   0x20A  6100   V1 = 0
+#   0x20C  6200   V2 = 0
+#   0x20E  D125   draw glyph at (V1, V2), 5 rows
+#   0x210  1210   jump self
+#   ...    pad
+#   0x220  00     scratch — overwritten by the store
+#   0x221  03     the digit the VIP behaviour reaches
+#
+# The two behaviours draw DIFFERENT DIGITS at the SAME position: '0' and '3', both 14 lit pixels.
+# That is the complement of ROM A, where one glyph MOVES. Same-block structural change versus
+# cross-block relocation — which is exactly the distinction block SSIM is sensitive to.
+_INDEX_CODE = [
+    0xA2,
+    0x20,
+    0x60,
+    0x00,
+    0xF0,
+    0x55,
+    0xF0,
+    0x65,
+    0xF0,
+    0x29,
+    0x61,
+    0x00,
+    0x62,
+    0x00,
+    0xD1,
+    0x25,
+    0x12,
+    0x10,
+]
+INDEX_ROM = bytes(_INDEX_CODE + [0x00] * (0x20 - len(_INDEX_CODE)) + [0x00, 0x03])
+
+INDEX_ROM_SOURCE = """\
+# digit.8o — isolates the FX55/FX65 index quirk. Assembles to the bytes in INDEX_ROM.
+: main
+  i := 0x220
+  v0 := 0
+  save v0        # VIP leaves i advanced to 0x221; CHIP-48 leaves it at 0x220
+  load v0        # so this reads a different byte under each behaviour
+  i := hex v0
+  v1 := 0
+  v2 := 0
+  sprite v1 v2 5
+  loop again
+"""
+
+SHIFT_TARGET = "shift_uses_vy"
+INDEX_TARGET = "memory_increments_i"
+ALL_QUIRKS = ("shift_uses_vy", "memory_increments_i", "jump_uses_vx", "vf_reset", "sprites_wrap")
 
 
 @dataclass(frozen=True)
@@ -104,18 +159,23 @@ def _frame(rom: bytes, quirks: Quirks, frames: int, tick: bool = True) -> bytes:
     return bytes(machine.display)
 
 
-def check(rom: bytes, third_party: dict[str, bytes] | None = None, frames: int = 30) -> Acceptance:
+def check(
+    rom: bytes,
+    third_party: dict[str, bytes] | None = None,
+    frames: int = 30,
+    target: str = SHIFT_TARGET,
+) -> Acceptance:
     """Run the four acceptance gates. `third_party` maps interpreter name -> its final frame."""
     base = _frame(rom, COSMAC_VIP, frames)
+    others = tuple(q for q in ALL_QUIRKS if q != target)
+    flipped = Quirks(**{target: not getattr(COSMAC_VIP, target)})
 
     timer_free = base == _frame(rom, COSMAC_VIP, frames, tick=False)
-    sensitive = _frame(rom, Quirks(**{TARGET_QUIRK: False}), frames) != base
+    sensitive = _frame(rom, flipped, frames) != base
     spurious = tuple(
-        q
-        for q in OTHER_QUIRKS
-        if _frame(rom, Quirks(**{q: not getattr(COSMAC_VIP, q)}), frames) != base
+        q for q in others if _frame(rom, Quirks(**{q: not getattr(COSMAC_VIP, q)}), frames) != base
     )
-    insensitive = tuple(q for q in OTHER_QUIRKS if q not in spurious)
+    insensitive = tuple(q for q in others if q not in spurious)
 
     settles_at = None
     for n in range(2, frames):
@@ -125,8 +185,8 @@ def check(rom: bytes, third_party: dict[str, bytes] | None = None, frames: int =
 
     reproduced: tuple[str, ...] = ()
     if third_party:
-        vip, c48 = base, _frame(rom, CHIP48, frames)
-        reproduced = tuple(name for name, frame in third_party.items() if frame in (vip, c48))
+        expected = (base, _frame(rom, flipped, frames))
+        reproduced = tuple(name for name, frame in third_party.items() if frame in expected)
 
     return Acceptance(
         timer_free=timer_free,

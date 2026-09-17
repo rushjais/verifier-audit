@@ -375,3 +375,42 @@ Each strategy returns a similarity in [0, 1]. A strategy is scored on **separati
 acceptance threshold accept every eligible correct interpreter and reject every cheat? Reporting
 separation rather than a rate at one chosen threshold avoids smuggling the answer in through the
 threshold.
+
+---
+
+# AMENDMENT 5 — ROM B accepted; Prediction 14 (2026-09-17)
+
+ROM B (`digit.ch8`, 34 bytes) is assembled and passes all four Amendment 3 gates: timer-free,
+sensitive to `memory_increments_i` and inert to the other four quirks, settled at frame 2, and
+reproduced by all seven third-party interpreters.
+
+It draws **a different digit in the same place** — `3` under the VIP behaviour, `0` under
+CHIP-48, both 14 lit pixels at (0,0). ROM A moves one glyph; ROM B substitutes another. Same-block
+structural change versus cross-block relocation.
+
+The population splits differently from ROM A, which is worth recording: `robertolaru` follows the
+VIP shift but not the VIP index behaviour, and `cwithmichael` the reverse. Real interpreters mix
+their quirk choices rather than adopting a platform wholesale.
+
+| ROM | VIP behaviour | CHIP-48 behaviour |
+| --- | --- | --- |
+| A (shift) | craigthomas, robertolaru | wyattferguson, islay, cwithmichael, rudzen, debugloop |
+| B (index) | craigthomas, cwithmichael | wyattferguson, islay, robertolaru, rudzen, debugloop |
+
+**Registered before the strategies are run on ROM B.**
+
+> **Prediction 14.** §3.6 explained SSIM's ROM A failure mechanically: relocation disturbs two 8×8
+> blocks, deletion disturbs one. ROM B's divergence stays inside one block, so that explanation
+> predicts SSIM should treat the correct-but-divergent candidate **more favourably on ROM B than
+> on ROM A** — its score should rise, and it may now exceed the blank screen, letting SSIM
+> separate where it could not before.
+>
+> **Falsified if** SSIM's score for the correct-divergent candidate on ROM B is not higher than
+> its 0.9375 on ROM A.
+>
+> **Why this matters more than the number:** if it holds, §3.6's finding is scoped — SSIM fails on
+> *relocation*, not on structural difference generally, and the mechanism given is the right one.
+> If it fails, the mechanism in §3.6 is wrong and that section needs rewriting even though its
+> headline number stands.
+>
+> **Confidence:** medium-high on the direction, low on whether it clears the blank screen.
