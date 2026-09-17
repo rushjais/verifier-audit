@@ -184,7 +184,7 @@ now traced to a line in their own source (`ADAPTERS.md`).
 What this supports is narrow: **when choosing a reference implementation for differential grading,
 correctness cannot be assumed from the fact that something is a working, published interpreter.**
 
-### 3.6 All five grading strategies rank a blank screen above a correct implementation
+### 3.6 SSIM ranks a blank screen above a correct implementation — when the divergence *moves* something
 
 The study §4 previously said could not be run. It runs on one ROM.
 
@@ -224,6 +224,40 @@ are in it. Whether their frames sit in that regime is measurable, and is not mea
 inversion — |∇(1−x)| = |∇x| — so every edge is in the same place and the metric reports perfect
 similarity for an image wrong in every pixel. Explainable, reproducible, and fatal as a grader.
 
+#### ROM B: the same test where the divergence does not move
+
+ROM B (`digit.ch8`, 34 bytes, same four gates) isolates the `FX55`/`FX65` index quirk and draws a
+**different digit in the same place** — `3` or `0`, both 14 lit pixels at (0,0). ROM A relocates a
+glyph; ROM B substitutes one. Prediction 14 was registered before running it: if §3.6's mechanism
+is right, SSIM should treat ROM B's divergence more favourably, because it disturbs one block
+rather than two.
+
+| | ROM A (relocation) | ROM B (substitution) | blank screen |
+| --- | --- | --- | --- |
+| pixel proportion | 0.9863 ✗ | **0.9980** ✓ | 0.9932 |
+| SSIM | 0.9375 ✗ | **0.9943** ✓ | 0.9688 |
+| GMSD | 0.8492 ✗ | 0.9331 ✗ | 0.8977 · *inverted scores 1.0000* |
+| exact match | 0.0000 ✗ | 0.0000 ✗ | 0.0000 |
+| separates at n=7? | **none of the five** | pixel proportion ✓, SSIM ✓ | — |
+
+**Prediction 14 holds, and it corrects the headline.** SSIM does not fail on structural difference
+in general: it rises from 0.9375 to 0.9943 and now clears the blank screen, separating cleanly.
+The failure is specific to **spatial displacement**, and the mechanism given above is the reason —
+moving a glyph disturbs the block it left *and* the block it entered, while deleting or
+substituting one disturbs only the block it occupied.
+
+So the accurate statement is narrower and more useful than "SSIM ranks a blank screen higher":
+
+> **Block-pooled similarity has a mechanically predictable blind spot for divergences that move
+> something. A quirk that changes *where* output is drawn is scored worse than drawing nothing;
+> a quirk that changes *what* is drawn in the same place is scored correctly.**
+
+Two strategies fail on **both** ROMs, for different reasons. **Exact match** rejects every
+correct implementation that differs at all — by construction, and it is the failure GBA Eval
+reported first. **GMSD** never separates, because a wholly inverted frame scores exactly 1.0000
+under it; its blindness is to inversion rather than to displacement, and no choice of ROM fixes
+it. **Thresholded at τ=.05** accepts the blank screen on both ROMs and so never separates either.
+
 **The eligibility rule changes the conclusion** — the flip Amendment 4 said to report as the
 finding rather than resolve:
 
@@ -252,9 +286,13 @@ replaced with cheats chosen after seeing the numbers.
 | 11 | pixel proportion: both scores > 0.98, no separating threshold | **hit**, and the figures landed where predicted (0.9863 / 0.9932) |
 | 12 | SSIM ranks a correct interpreter below a structure-preserving cheat | **hit** — 0.9375 vs 0.9688 |
 | 13 | GMSD does not reproduce its reported failure; ranks like SSIM | **miss** — they agree on blank-vs-correct and disagree totally on inversion (1.0000 vs −0.0160). GMSD fails here, differently |
+| 14 | SSIM scores the divergence higher on ROM B than on ROM A (one disturbed block, not two) | **hit** — 0.9375 → 0.9943, clearing the blank screen and separating. Confirms the mechanism and scopes the finding to displacement |
 
-Four evaluated, three hit, one missed. **#13 was registered as one I expected to get wrong**, and
-it is the one that produced the sharper finding.
+Five evaluated, four hit, one missed. **#13 was registered as one I expected to get wrong**, and
+it is the one that produced the sharper finding. **#14 was registered specifically so that a
+mechanism I had already published in §3.6 could be falsified** — it could have shown the
+explanation was wrong while the headline number stood. It did not, and the claim is narrower and
+better for having been put at risk.
 
 ---
 
@@ -311,8 +349,9 @@ same party that would write the metrics.
   monochrome display. GBA Eval's frames are 240×160 and in colour, where the same displacement
   disturbs a different fraction of the image. The finding is that the regime exists and is
   reachable by a legitimate quirk difference, not that their grader mis-ranks their submissions.
-- ROM B was never assembled, so §3.6 has one divergence magnitude, not two. A larger structural
-  difference might separate where a four-pixel shift does not, and that is untested.
+- §3.6 covers two divergence *kinds* (relocation, substitution) on one quirk each. It does not
+  vary magnitude within a kind — a two-pixel or twenty-pixel shift is untested — nor does it test
+  more than one quirk per kind.
 
 ---
 
