@@ -1,15 +1,16 @@
-# Sixteen measurements that were about the wrong thing
+# Seventeen measurements that were about the wrong thing
 
 **Last updated 2026-09-17.** Numbers reproduce from this repository; commands in §9.
 
 > **TL;DR.** I set out to build an instrument that detects when a grader is unfair rather than
 > merely gameable. The instrument works, and everything it measured turned out to be a replication
 > of established results — the literature search in `LITERATURE.md` is unsparing about that. What
-> the project produced that is not a replication is **a first-person record of sixteen occasions,
-> inside one small project, where a measurement was confidently about something other than what it
-> claimed**. Fourteen were introduced by the model doing the work. None was caught by the thing
-> it broke failing at the moment it broke. They fall into four patterns, and each pattern has a
-> direct analogue in building RL graders — which is the argument this document is actually making.
+> the project produced that is not a replication is **a first-person record of seventeen
+> occasions, inside one small project, where a measurement was confidently about something other
+> than what it claimed**. Fifteen were introduced by the model doing the work. None was caught by
+> the thing it broke failing at the moment it broke. They fall into four patterns, and each
+> pattern has a direct analogue in building RL graders — which is the argument this document is
+> actually making.
 
 **Authorship.** Built with Claude Code. I set the direction, made the scoping calls, reviewed the
 output, and pushed back on it — including the eligibility amendments, the decision not to weaken
@@ -23,7 +24,7 @@ each defect.
 
 The project was an instrument for catching graders that are confidently wrong — that reject
 correct work, disagree with themselves, or test what the prompt never made knowable. While
-building it, the project committed that error sixteen times.
+building it, the project committed that error seventeen times.
 
 That is not irony for its own sake. The failures were **recorded as they happened, with their
 causes traced, by someone who was specifically looking for that class of failure and still missed
@@ -33,7 +34,7 @@ are assembled by people who already know the answer.
 Four things make the record worth more than the results it accompanies:
 
 1. **Every incident has a traced cause**, not a symptom — a source line where there is one, and
-   for #2, #14 and #16 a cause that is not a line at all. §2 and Appendix A give them.
+   for #2, #14, #16 and #17 a cause that is not a line at all. §2 and Appendix A give them.
 2. **None was caught by the thing it broke failing at the moment it broke.** Three did surface as
    tracebacks or test failures, but from tests written days earlier for unrelated purposes.
 3. **Each pattern maps onto a way real graders fail.** Pattern A is the acceptance test that never
@@ -41,25 +42,28 @@ Four things make the record worth more than the results it accompanies:
    makes a fair task look unfair and an unfair one look fine. Pattern B is a rate reported over
    the wrong population.
 4. **The project's own checks caught a minority of them.** Appendix A's surfacing column: tests
-   and tracebacks **3** (#4, #5, #8), running a documented command **3** (#3, #12, #14), reading
-   code or output **8**, the repository's owner **1**, an unexpected state **1**. Reading beat
-   testing better than two to one — though half of that reading was of *code*, not output.
+   and tracebacks **3** (#4, #5, #8), running or verifying a documented command **4** (#3, #12,
+   #14, #17), reading code or output **8**, the repository's owner **1**, an unexpected state
+   **1**. Reading beat testing better than two to one — though half of that reading was of *code*,
+   not output.
 
 The results that produced these incidents are in §4, labelled as the replications they are.
 
 ---
 
-## 2. The sixteen
+## 2. The seventeen
 
-Assembled while building an instrument for the same class of failure in graders. **Fourteen were
+Assembled while building an instrument for the same class of failure in graders. **Fifteen were
 introduced by the model during this work**; #1 was in the original hackathon code, which three of
 us wrote; #2 is a property of git that nobody introduced and nobody noticed. The full list with
 causes is Appendix A.
 
-### A. The check was not running (#2, #3, #4, #8, #12), and one that was never broken (#16)
+### A. The check was not running (#2, #3, #4, #8, #12, #17), and one that was never broken (#16)
 
-The most common of the four — six of sixteen — and an inert check is indistinguishable from a
-passing one. `core.hooksPath` is local git config, so a clone has the hook files and no hook.
+The most common of the four — seven of seventeen — and an inert check is indistinguishable from
+a passing one. `core.hooksPath` is local git config, so a clone has the hook files and no hook;
+and in this repository there were no hook files either, so the command §9 gave for activating the
+gate pointed at a directory that did not exist, set the config anyway, and exited 0.
 `make check | tail` reports `tail`'s exit status, so a failing gate reads as success. `RLIMIT_AS`
 raised on macOS before any candidate ran, so every exploit scored 0 and every exploit looked
 sealed. Fields were added to a dataclass and the table never updated, so a tightened eligibility
@@ -117,8 +121,10 @@ That correction is itself another instance — unnumbered, because it is a claim
 rather than an entry in it — and the reason the section is here.
 
 #12, #13, #14 and #15 were all found in one sitting, by running the documented commands from a
-clean clone and by checking what the shipped code measures before running it. Four of sixteen came
-from an hour of not trusting the documentation — the highest-yield hour in the project.
+clean clone and by checking what the shipped code measures before running it. Four of seventeen
+came from an hour of not trusting the documentation — the highest-yield hour in the project. #17
+arrived the same way and later: checking whether the gate was on, immediately before a commit
+that would have relied on it.
 
 ---
 
@@ -574,7 +580,7 @@ uv sync
 python -m vaudit.tasks.chip8.fetch    # population + ROMs at pinned commits (network, no API key)
 make check                            # 173 tests, offline, no API key
 python -m vaudit.audit.sweep --tasks 5  # prices the run; buys nothing without --confirm
-git config core.hooksPath .githooks   # optional: activate the pre-commit gate (incident #2)
+git config core.hooksPath .githooks   # activate the pre-commit gate (incidents #2, #17)
 ```
 
 **Order matters, and an earlier draft had it wrong.** Run `make check` before fetching and you get
@@ -590,8 +596,11 @@ pass from a fresh clone with no API key and no pre-existing `.population`. Step 
 dry run only; it prints the estimate and buys nothing.
 
 Three caveats. §4.2 has no reproduce path in this repository at all (see that section);
-`.githooks` is not active in a fresh clone — `git config core.hooksPath .githooks`
-is required, and that is incident #2. And §4.1/§4.2 were produced in the predecessor repository
+`.githooks` is not active in a fresh clone — `git config core.hooksPath .githooks` is required,
+and that is incident #2. Worse, until 2026-09-17 there was no `.githooks` directory here at all,
+so that command set a config pointing at nothing and the gate had never run in this repository —
+incident #17. The hook exists as of this commit and runs `make check` unpiped, which is #3. And
+§4.1/§4.2 were produced in the predecessor repository
 before the clean-room rewrite. §4.1 has since been regenerated **in this repository**
 (2026-09-17) and its population is committed under `data/solutions/`, so it now reproduces with no
 API calls. §4.2 remains predecessor-only.
@@ -635,9 +644,10 @@ both hold, and both turned out stronger than the draft claimed.
 | 14 ▲ | "`make check` — 155 tests" | in the documented order it was 111 passed, 14 skipped; the population has to be fetched first. The suite has grown since — §9 carries re-measured counts | running the steps as written, in the order written |
 | 15 ▲ | "the sweep command reproduces §4.1 and §4.2 here" | true of §4.1, false of §4.2 — the clean-room rewrite dropped the hardening track, so this repo cannot produce that number at all | checking what the shipped sweep actually measures before running it |
 | 16 ▲ | "the repository flipped to public on its own — an incident" | it did not. The owner made it public, deliberately, using an option I had offered them. I recorded a defect that never existed and then reverted their decision | the owner said so |
+| 17 ▲ | §9: "`git config core.hooksPath .githooks` — activate the pre-commit gate" | there was no `.githooks` directory in this repository. The command set a config pointing at nothing, exited 0, and the gate had never run here — #2 with the hook files missing too | checking whether the gate was on, immediately before a commit that would have relied on it |
 
-#12, #13 and #14 were found by running §9's commands from a clean clone, which is why that is now part
-of the procedure rather than an assumption. #13 is the sharpest of the set: a tool whose job is
-maintaining quality silently modified the evidence, in a document arguing that measurements are
-confidently about the wrong thing. Quoted source is now fenced as `text` so no formatter can
+#12, #13, #14 and #17 were found by running or checking §9's own commands, which is why that is
+now part of the procedure rather than an assumption. #13 is the sharpest of the set: a tool whose
+job is maintaining quality silently modified the evidence, in a document arguing that
+measurements are confidently about the wrong thing. Quoted source is now fenced as `text` so no formatter can
 touch it.

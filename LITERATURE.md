@@ -63,8 +63,8 @@ mechanism that was already published; they confirm it in a new setting rather th
    exhaustively and the claim is weaker for that.
 3. **The method.** Pre-registration with dated amendments, falsifiers stated in advance, and a
    mechanism put at risk by Predictions 14–16.
-4. **§2 and Appendix A.** A first-person record of sixteen measurements in one project that were
-   about something other than what they claimed. Nothing found in the search resembles it, and
+4. **§2 and Appendix A.** A first-person record of seventeen measurements in one project that
+   were about something other than what they claimed. Nothing found in the search resembles it, and
    on reflection it is the most original content here.
 
 ## What was not searched
