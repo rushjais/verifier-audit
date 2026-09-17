@@ -6,7 +6,7 @@
 > same verdict twice, and tests only what it told the candidate — not just whether it can be
 > cheated. It produced four modest numbers and one negative result: the headline study, comparing
 > five grading strategies on real third-party CHIP-8 interpreters, could not be run, for three
-> reasons each measured rather than guessed. The most useful section is §7 — eleven times during
+> reasons each measured rather than guessed. The most useful section is §7 — thirteen times during
 > construction a measurement here was confidently about something other than what it claimed.
 
 **Authorship.** Built with Claude Code. I set the direction, made the scoping calls, reviewed the
@@ -111,7 +111,7 @@ placed 9th of 71. The verifier core was Advay's and rayan's work; mine was the f
 harness tampering by rebuilding the test suite from the task — which sealed *file* tampering but
 not in-process answer extraction:
 
-```python
+```text
 import test_cases; return dict(test_cases.CASES)[args]   # answers by module
 sys._getframe(1).f_locals["expected"]                    # answers by stack frame
 test_cases._eq = lambda a, b: True                       # neuter the comparison
@@ -194,11 +194,11 @@ same party that would write the metrics.
 
 ---
 
-## 7. Eleven measurements that were about the wrong thing
+## 7. Thirteen measurements that were about the wrong thing
 
-Assembled while building an instrument to detect exactly this. **Nine were introduced by the model
-during this work** (marked ▲); #1 was in the original hackathon code, which all three of us wrote;
-#2 is a property of git that nobody introduced and nobody noticed.
+Assembled while building an instrument to detect exactly this. **Eleven were introduced by the
+model during this work** (marked ▲); #1 was in the original hackathon code, which all three of us
+wrote; #2 is a property of git that nobody introduced and nobody noticed.
 
 | # | claimed | true | how it surfaced |
 | --- | --- | --- | --- |
@@ -213,6 +213,14 @@ during this work** (marked ▲); #1 was in the original hackathon code, which al
 | 9 ▲ | the quirks ROM was excluded for needing input | hardcoded reason string; it is timer-dependent | reading the report's own output |
 | 10 ▲ | a rounding variant passed the grader | no visible input produced a repeating average | reading the result table |
 | 11 ▲ | a hardening test asserted something | `assert x == y or x != y` cannot fail | re-reading my own test |
+| 12 ▲ | "all checks passed" | `ruff check` is lint only; `make check` also runs `ruff format --check`, which was failing | running the documented reproduce command from a clean clone |
+| 13 ▲ | quoted third-party source was verbatim | `ruff format` rewrote the quotes (`0xff` → `0xFF`) in evidence cited against those projects | reading the diff the formatter produced |
+
+#12 and #13 were found by running §9's commands from a clean clone, which is why that is now part
+of the procedure rather than an assumption. #13 is the sharpest of the set: a tool whose job is
+maintaining quality silently modified the evidence, in a document arguing that measurements are
+confidently about the wrong thing. Quoted source is now fenced as `text` so no formatter can
+touch it.
 
 **Correcting an earlier draft of this section:** it claimed none was caught by an error message.
 That is false. #4, #5 and #8 surfaced as tracebacks or test failures, and #3 printed an error that
@@ -247,8 +255,15 @@ python -m vaudit.tasks.chip8.fetch            # population + ROMs, pinned commit
 python -m vaudit.audit.sweep --tasks 5        # prices the run; buys nothing without --confirm
 ```
 
-§3.1 and §3.2 were produced in the predecessor repository before the clean-room rewrite; the
-sweep command reproduces them here but regenerates the solution population, which costs ~$0.35.
+**Verified from a clean clone on 2026-09-16**, which is how #12 and #13 were found: `make check`
+was failing on the format step while `ruff check` alone reported success. Steps 1, 2 and 3 now
+pass from a fresh clone with no API key and no pre-existing `.population`. Step 4 was run as a
+dry run only; it prints the estimate and buys nothing.
+
+Two caveats. `.githooks` is not active in a fresh clone — `git config core.hooksPath .githooks`
+is required, and that is incident #2. And §3.1/§3.2 were produced in the predecessor repository
+before the clean-room rewrite; the sweep command reproduces them here but regenerates the solution
+population, at roughly $0.35.
 
 ## 10. External claims, for checking
 

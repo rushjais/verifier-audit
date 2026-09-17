@@ -91,7 +91,7 @@ each other — so the adapters run them correctly. What follows are defects in t
 
 ### wyattferguson — `chip8/cpu.py:157-160`
 
-```python
+```text
 def _store_vx_result(self, value: int) -> None:
     self.v[CARRY_FLAG] = value >= 0
     self.v[self.x] = value % MAX_8BIT
@@ -104,7 +104,7 @@ store clobbers the flag — exactly the "can vF be used as the vX input" case th
 
 ### robertolaru — `cpu.py:256-261`
 
-```python
+```text
 res = (self.v[vx] + self.v[vy]) & 0xff
 self.v[vx] = res
 if res > 0xff:
@@ -116,7 +116,7 @@ is dead code and VF is always 0.
 
 ### debugloop — `emu.py:112-114`
 
-```python
+```text
 result = self.v[...] + self.v[...]
 self.v[0xf] = result & 0xf0000
 self.v[...] = result & 0xffff
@@ -133,7 +133,7 @@ vF-as-operand case as wyattferguson, arrived at independently.
 
 ### islay — `src/chip8.py:99-129`
 
-```python
+```text
 def set_vx_to_vx_plus_vy(self):
     self.v[0xF] = 0
     total = self.v[self.x(self.opcode)] + self.v[self.y(self.opcode)]
@@ -147,7 +147,7 @@ which corrupts only the flag; here it corrupts the arithmetic. Separately,
 
 ### rudzen — `cpu.py:128, 134`
 
-```python
+```text
 elif sub_op == 5:  # SUB Vx, Vy
     chip8.v[15] = 1 if chip8.v[vx] > chip8.v[vy] else 0
 ```
