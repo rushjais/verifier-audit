@@ -453,3 +453,41 @@ magnitude-dependent.** It compares pixel-by-pixel with no blocks, so on that met
 displacement should make the divergent candidate strictly worse — up to the point where the two
 glyph positions stop overlapping, after which it is constant. If pixel proportion is monotone
 where SSIM is not, the two failures have different causes and the write-up should say so.
+
+---
+
+# AMENDMENT 7 — a third quirk, and the claim it can falsify (2026-09-17)
+
+Written before ROM C exists.
+
+§3.6 currently describes two divergence *kinds* — relocation (ROM A) and substitution (ROM B) —
+and explains the difference by **block count**: relocation disturbs the block a glyph left and the
+one it entered; substitution disturbs only the block it occupies. Two ROMs cannot distinguish
+"kind matters" from "block count matters", because in this sample kind and block count are
+perfectly confounded.
+
+**ROM C — `wrap.ch8`, the sprite-clipping quirk.** Draw the font glyph at x=62, hard against the
+right edge. Interpreters that wrap put the overflowing columns at x=0; interpreters that clip
+simply do not draw them. Both are defensible and real interpreters do both.
+
+That is a **third kind**: not relocation and not substitution but **partial addition** — the two
+frames share most of their content, and one has extra pixels somewhere the other has none. It is
+also, by geometry, a **one-block** divergence: the shared columns at 62–63 are identical, and the
+whole difference falls in the block covering x=0–7.
+
+> **Prediction 16.** SSIM's behaviour is predicted by **block count alone, not by divergence
+> kind**. ROM C is a different kind from both A and B but shares B's block count, so SSIM should
+> score its divergent candidate **close to ROM B's 0.9943 and well above the blank screen's
+> 0.9688** — and should separate, as it does on ROM B and fails to on ROM A.
+>
+> **Falsified if** SSIM scores ROM C's divergence below the blank screen, or nearer ROM A's
+> 0.9375 than ROM B's 0.9943. Either outcome would mean kind matters independently of block count
+> and the mechanism in §3.6 is incomplete.
+>
+> **Confidence:** medium-high. The risk is that "partial addition" changes block *variance* rather
+> than block membership, which the SSIM contrast term is sensitive to in a way pure displacement
+> is not.
+
+ROM C must pass the same four Amendment 3 gates before any strategy runs on it, and the
+population must genuinely split on `sprites_wrap` — a ROM on which every interpreter agrees tests
+nothing.
