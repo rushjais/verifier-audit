@@ -18,20 +18,23 @@ this project pinned.
 
 ## How each cause was verified
 
-Reading the source is not enough to say a line *causes* a failure. Each was confirmed with a
-minimal ROM that isolates one behaviour, computes a value into `V0`, and draws `V0` as a font
-digit — so the rendered digit is the answer and no debugger access is needed. A correct
-interpreter draws the expected digit; each of these draws a different one.
+Reading the source is not enough to say a line *causes* a failure. Each claim below is confirmed
+by a minimal ROM isolating one behaviour: it computes a value into `V0` and draws `V0` as a font
+digit, so the rendered digit is the answer and no debugger access is needed.
 
-| repo | probe | correct | observed |
-| --- | --- | --- | --- |
-| robertolaru | `V0=200, V1=100, 8014`, then draw `VF` | `1` | `0` |
-| rudzen | `V0=5, V1=5, 8015`, then draw `VF` | `1` | `0` |
-| islay | `V0=5, VF=3, 80F4`, then draw `V0` | `8` | `5` |
-| cwithmichael | `V0=5, VF=3, 80F4`, then draw `V0` | `8` | `5` |
+| probe | correct | robertolaru | rudzen | islay | cwithmichael |
+| --- | --- | --- | --- | --- | --- |
+| carry: `V0=200, V1=100, 8014`, draw `VF` | `1` | **0** | 1 | 1 | 1 |
+| borrow when equal: `V0=5, V1=5, 8015`, draw `VF` | `1` | 1 | **0** | 1 | 1 |
+| `VF` as operand: `V0=5, VF=3, 80F4`, draw `V0` | `8` | 8 | 8 | **5** | **5** |
+| `VF` as destination: `VF=200, V1=100, 8F14`, draw `VF` | `1` | **0** | **✗** | **✗** | **✗** |
 
-The reference and the three unaffected interpreters draw the correct digit on every probe, so the
-probes are not measuring the harness.
+`✗` means no font digit was drawn at all: `VF` held the sum (44) rather than the carry, so the
+following `FX29` indexed outside the font table. The reference and `craigthomas` draw the correct
+digit on all four probes, so the probes measure the interpreters and not the harness.
+
+For `robertolaru` the single defect below explains both of its failures; the others have two
+distinct symptoms from one root each.
 
 ---
 
@@ -48,19 +51,11 @@ if res > 0xff:
     self.v[0xf] = 1
 ```
 
-`res` is masked to 8 bits on the first line, so `res > 0xff` is never true and `VF` is always 0.
+`res` is masked to 8 bits on the first line, so `res > 0xff` is never true and `VF` is always set
+to 0.
 
-Reproduce: `4-flags.ch8` from the Timendus CHIP-8 test suite renders a cross for each incorrect
-flag. Minimal check: `V0=200, V1=100, 8014` should leave `VF=1`; it leaves 0.
-
-Suggested fix — keep the unmasked total for the test, and write `VF` last so that `8XF4`, where
-the destination is `VF` itself, keeps the flag rather than the sum:
-
-```text
-total = self.v[vx] + self.v[vy]
-self.v[vx] = total & 0xff
-self.v[0xf] = 1 if total > 0xff else 0
-```
+Reproduce with `4-flags.ch8` from the Timendus CHIP-8 test suite, which renders a cross for each
+incorrect flag. Minimal check: `V0=200, V1=100, 8014` should leave `VF=1`; it leaves 0.
 
 Found while testing several open-source CHIP-8 interpreters against the standard test suite.
 
@@ -77,15 +72,15 @@ elif sub_op == 5:  # SUB Vx, Vy
     chip8.v[15] = 1 if chip8.v[vx] > chip8.v[vy] else 0
 ```
 
-`VF` should be 1 when there is *no* borrow, i.e. `Vx >= Vy`. With `>`, the equal case — result 0,
-no borrow — sets 0 instead of 1. The same applies to `8XY7` at line 134 with the operands
+`VF` should be 1 when there is *no* borrow, i.e. when `Vx >= Vy`. With `>`, the equal case —
+result 0, no borrow — sets 0 instead. `8XY7` at line 134 has the same comparison with the operands
 reversed.
 
-Reproduce: `4-flags.ch8` from the Timendus CHIP-8 test suite. Minimal check: `V0=5, V1=5, 8015`
-should leave `VF=1`; it leaves 0.
+Separately, `VF` is assigned before `V[vx]` in every branch of the `8XY_` group, so an instruction
+whose destination is `VF` ends up holding the result rather than the flag.
 
-Suggested fix: `>=` in both places. Separately, `VF` is assigned before `V[vx]` in every branch of
-the `8XY_` group, so an instruction whose destination is `VF` overwrites the flag with the result.
+Reproduce with `4-flags.ch8` from the Timendus CHIP-8 test suite. Minimal checks: `V0=5, V1=5,
+8015` should leave `VF=1`, and `VF=200, V1=100, 8F14` should leave `VF=1`.
 
 Found while testing several open-source CHIP-8 interpreters against the standard test suite.
 
@@ -105,20 +100,13 @@ def set_vx_to_vx_plus_vy(self):
 
 `VF` is written before the operands are read, so when `VX` or `VY` *is* `VF` the operand read
 returns the flag just written rather than the register's value — the arithmetic result is wrong,
-not just the flag. `set_vx_to_vx_minus_vy` and `set_vx_to_vy_minus_vx` share the ordering.
+not only the flag. When `VF` is the destination it ends up holding the result instead of the flag.
+`set_vx_to_vx_minus_vy` and `set_vx_to_vy_minus_vx` share the ordering.
 
-Reproduce: `4-flags.ch8` from the Timendus CHIP-8 test suite checks the `VF`-as-operand cases
-directly. Minimal check: `V0=5, VF=3, 80F4` should leave `V0=8`; it leaves 5.
+Also, `set_vx_to_vx_shl_1` assigns `self.v[x] << 1` with no `& 0xFF`, so `VX` can exceed 255.
 
-Suggested fix — compute into a local, write `VF` last:
-
-```text
-total = self.v[self.x(self.opcode)] + self.v[self.y(self.opcode)]
-self.v[self.x(self.opcode)] = total & 0xFF
-self.v[0xF] = 1 if total > 0xFF else 0
-```
-
-Also `set_vx_to_vx_shl_1` assigns `self.v[x] << 1` with no `& 0xFF`, so `VX` can exceed 255.
+Reproduce with `4-flags.ch8` from the Timendus CHIP-8 test suite, which checks the `VF`-as-operand
+cases directly. Minimal check: `V0=5, VF=3, 80F4` should leave `V0=8`; it leaves 5.
 
 Found while testing several open-source CHIP-8 interpreters against the standard test suite.
 
@@ -126,7 +114,7 @@ Found while testing several open-source CHIP-8 interpreters against the standard
 
 ## 4. `cwithmichael/chip8_py`
 
-**Title:** `8XY4` writes `VF` before the result, losing the flag when `VF` is the destination
+**Title:** `8XY4` writes `VF` before the result
 
 `cpu.py`:
 
@@ -140,18 +128,10 @@ elif op == 4:
 ```
 
 The carry test itself is correct; the ordering is not. `VF` is assigned before `register[x]`, so
-when the destination is `VF` the sum immediately overwrites the flag — and when `VF` is an
-operand, the addition reads the value just written. The subtract opcodes below share the ordering.
+when `VF` is an operand the addition reads the value just written, and when it is the destination
+the sum overwrites the flag. The subtract opcodes below share the ordering.
 
-Reproduce: `4-flags.ch8` from the Timendus CHIP-8 test suite. Minimal check: `V0=5, VF=3, 80F4`
-should leave `V0=8`; it leaves 5.
-
-Suggested fix:
-
-```text
-total = self.register[x] + self.register[y]
-self.register[x] = total & 0xFF
-self.register[0xF] = 1 if total > 0xFF else 0
-```
+Reproduce with `4-flags.ch8` from the Timendus CHIP-8 test suite. Minimal check: `V0=5, VF=3,
+80F4` should leave `V0=8`; it leaves 5.
 
 Found while testing several open-source CHIP-8 interpreters against the standard test suite.
