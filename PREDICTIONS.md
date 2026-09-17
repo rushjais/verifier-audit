@@ -329,3 +329,49 @@ Registered now. Prediction 9 (Amendment 2) stands unchanged and is evaluated on 
   (Amendment 1, obligation 1).
 - If ROM B cannot be assembled to satisfy Acceptance, the study runs on ROM A alone with n
   reported, rather than being widened until something works.
+
+---
+
+# AMENDMENT 4 — report both eligibility rules (2026-09-17)
+
+Written before any grading strategy exists. **No rule changes.**
+
+ROM A is accepted (Amendment 3, all four gates) and the population splits 2/5 on the shift quirk.
+But ROM A renders no pass/fail marks, so under Amendment 2 rule 2 it is non-self-verifying and
+admits only fully-clean implementations — `craigthomas` alone, n=1.
+
+There is an argument for extending the rule: ROM A executes five opcodes with no branching and no
+data dependence, so its correct output is **analytically determined**, and Amendment 3 stated that
+output — a 14-pixel `0` glyph at x=4 or x=8, nothing else — *before the ROM ran*. An interpreter
+producing it has demonstrably executed every opcode this ROM uses. That is verification by
+pre-stated specification rather than by rendered marks, and `2-ibm-logo` would not qualify because
+nobody derived its output by hand.
+
+**That extension is not being made.** It would be the third loosening, it arrives exactly when the
+strict rule blocks the study again, and it would be made by the party that benefits. Amendment 1
+is the standing example of where that leads.
+
+Instead, every result is reported under **both** rules:
+
+| rule | population for ROM A | n |
+| --- | --- | --- |
+| strict (Amendment 2 rule 2) | `craigthomas` | 1 |
+| extended (analytically determined output) | all seven that reproduce a predicted frame | 7 |
+
+Per Amendment 1 obligation 3: **a ranking that flips between the two rules is reported as the
+finding, not resolved by choosing the friendlier one.** If the two agree, the strict number is the
+headline and the extended one is corroboration.
+
+## Cheat set, fixed now
+
+`BlankScreen`, `FrozenFirstFrame`, `InvertedPalette`, `OneFrameLate`, as already implemented.
+Noted in advance: ROM A settles at frame 2, so `FrozenFirstFrame` and `OneFrameLate` may be
+degenerate here — identical or near-identical to a correct frame. If so that is reported, not
+patched by adding cheats until the numbers look better.
+
+## Threshold handling
+
+Each strategy returns a similarity in [0, 1]. A strategy is scored on **separation**: does any
+acceptance threshold accept every eligible correct interpreter and reject every cheat? Reporting
+separation rather than a rate at one chosen threshold avoids smuggling the answer in through the
+threshold.
