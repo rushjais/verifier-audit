@@ -110,3 +110,18 @@ def test_rom_b_gate_four_and_a_different_population_split():
     assert like_ref_on_a != like_ref_on_b, (
         "if the two splits matched, 'VIP-like' would be a property of an implementation"
     )
+
+
+@needs_population
+def test_a_sprite_row_must_stay_on_one_scanline():
+    """Neither wrapping nor clipping moves part of a sprite row to the next row. Two interpreters
+    do, via a linear framebuffer index; this pins that as a defect rather than a quirk."""
+    rom = bytes([0xA2, 0x0C, 0x61, 0x3E, 0x62, 0x00, 0xD1, 0x21, 0x12, 0x08, 0x00, 0x00, 0xFF])
+    spilled = []
+    for entry in _fetched:
+        frame = build(entry, path_for(entry)).frames(rom, 20)[-1]
+        if any(frame[64 + x] for x in range(64)):
+            spilled.append(entry.key)
+    assert set(spilled) == {"robertolaru", "cwithmichael"}, (
+        f"expected exactly these two to spill onto row 1, got {spilled}"
+    )

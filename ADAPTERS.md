@@ -156,6 +156,28 @@ Borrow is computed with `>` where it needs `>=`. When VX == VY the subtraction d
 VF should be 1; this sets 0. The same off-by-one repeats for SUBN at line 134. VF is also assigned
 before VX in every branch of the `8XY_` group, so a VF destination clobbers the flag.
 
+### robertolaru and cwithmichael, second defect — sprite rows spill onto the next scanline
+
+`robertolaru/cpu.py:317` and `cwithmichael/cpu.py:243` compute the framebuffer position as a
+single linear index:
+
+```text
+pos = (x + (y + h) * 64 + i) & 0x7ff          # robertolaru
+idx = (vx + xline + ((vy + yline) * 64)) % GFX_SIZE   # cwithmichael
+```
+
+When `x + i` reaches 64 the index rolls into the **next row** instead of back to column 0 of the
+same row, so part of a sprite row is drawn one scanline lower. Both arrived at the same shortcut
+independently; it is a common one.
+
+Verified causally: a one-row sprite of `0xFF` drawn at x=62, y=0 must occupy a single scanline.
+Both place columns 62–63 on row 0 and the remaining six pixels on **row 1**. Every other
+interpreter keeps the row intact — three wrap within the row, two clip at the edge, and both of
+those are defensible readings of the quirk. Spilling onto the next row is not.
+
+Found by ROM C, not by the reference suite: the only test ROM in that suite covering sprite edge
+behaviour is the quirks ROM, which is timer-dependent and excluded here.
+
 ### All six traced
 
 No interpreter's failure is now recorded as "the suite said so" without a cause in its own source.

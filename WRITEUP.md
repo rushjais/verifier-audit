@@ -328,12 +328,22 @@ like ROM B — divergent above blank, two strategies separating — despite bein
 which is what the prediction was for. But its 0.9688 sits nearly midway between the other two,
 nearer ROM B by 0.0255 against 0.0313. Reported as marginal rather than clean.
 
-**ROM C also produced three distinct frames, not two.** `robertolaru` and `cwithmichael` wrap, but
-place the wrapped columns one row lower than the other wrapping interpreters. That is not a
-documented quirk and is more likely a defect; it has **not** been verified either way, and it is
-the reason ROM C's worst-correct score is lower than ROM B's. A population that quietly contains a
-bug alongside a quirk is exactly the confound Amendment 2 rule 2 exists to prevent, and under the
-strict rule neither interpreter is eligible here.
+**ROM C produced three distinct frames, and the third is a bug — now verified.** `robertolaru` and
+`cwithmichael` place the wrapped columns one row lower than the other wrapping interpreters. Both
+compute the framebuffer position as a single linear index (`(x + i + (y+h)*64) % 2048`), so when
+`x + i` reaches 64 it rolls into the next row rather than back to column 0 of the same one.
+
+Confirmed causally rather than by inspection: a one-row `0xFF` sprite drawn at x=62 must occupy a
+single scanline. Both put columns 62–63 on row 0 and the remaining six pixels on **row 1**. Three
+interpreters wrap within the row, two clip at the edge — both defensible — and these two do
+neither. They are excluded from ROM C's correct population, which leaves two behaviours and does
+not change the numbers above, since the clipping group was already the worst correct score.
+
+**ROM C found a defect the reference suite did not.** The only ROM in `chip8-test-suite` covering
+sprite edge behaviour is the quirks ROM, which is timer-dependent and excluded under Amendment 2
+rule 3. An authored ROM built to probe one quirk surfaced a fifth traced bug in two interpreters
+that had passed everything else available here — which is an argument for authored probes that
+this project did not set out to make.
 
 **The eligibility rule changes the conclusion** — the flip Amendment 4 said to report as the
 finding rather than resolve:
