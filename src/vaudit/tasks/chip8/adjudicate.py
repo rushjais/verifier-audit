@@ -130,8 +130,19 @@ def adjudicate(interpreter_name: str, rom_name: str, frame: Frame) -> Verdict:
 
 # --- per-ROM eligibility (PREDICTIONS.md, Amendment 1) -----------------------------------------
 
-SELF_REPORTING = frozenset({"corax", "flags"})  # render their own pass/fail marks
-CONTROL = frozenset({"ibm_logo", "chip8_logo"})  # quirk-free; every correct interpreter agrees
+
+def _self_verifying(rom: str) -> bool:
+    from .roms import BY_KEY
+
+    entry = BY_KEY.get(rom)
+    return bool(entry and entry.self_verifying)
+
+
+def _timer_dependent(rom: str) -> bool:
+    from .roms import BY_KEY
+
+    entry = BY_KEY.get(rom)
+    return bool(entry and entry.timer_dependent)
 
 
 @dataclass(frozen=True)
@@ -139,61 +150,54 @@ class Eligibility:
     interpreter: str
     rom: str
     eligible: bool
-    basis: str  # "verdict" — the ROM adjudicated; "proxy" — agreement on the controls
+    basis: str  # "verdict" | "fully-clean" | "excluded: timer-dependent"
     global_failures: int  # carried beside every result, per Amendment 1 obligation 1
 
     def render(self) -> str:
         state = "eligible" if self.eligible else "excluded"
         return (
-            f"{self.interpreter:<16} {self.rom:<12} {state:<9} by {self.basis:<8} "
+            f"{self.interpreter:<16} {self.rom:<12} {state:<9} by {self.basis:<26} "
             f"(global failures: {self.global_failures})"
         )
 
 
-def _consensus(frames: dict[str, Frame]) -> Frame | None:
-    """The frame a majority produced, or None if there is no majority."""
-    counts: dict[Frame, int] = {}
-    for frame in frames.values():
-        counts[frame] = counts.get(frame, 0) + 1
-    best, votes = max(counts.items(), key=lambda kv: kv[1])
-    return best if votes * 2 > len(frames) else None
-
-
 def eligibility(frames_by_rom: dict[str, dict[str, Frame]]) -> list[Eligibility]:
-    """Who may enter the population for which ROM, and on what basis.
+    """Who may enter the population for which ROM (PREDICTIONS.md Amendment 2).
 
-    A self-reporting ROM adjudicates itself: zero failed tests that a peer passes. Every other
-    ROM falls back to agreement with the consensus on the quirk-free controls — which is weaker,
-    and weakest on the quirks ROM, the one the study turns on. That limitation is stated in
-    Amendment 1 and must be repeated wherever these numbers appear.
+    1. Self-verifying ROM: the ROM adjudicates — zero failed tests that a peer passes.
+    2. Any other ROM: a fully clean implementation only. Amendment 1 allowed agreement on the
+       quirk-free controls as a proxy here; it was withdrawn because it granted the largest
+       population on exactly the ROM with the thinnest evidence.
+    3. Timer-dependent ROM: nobody is eligible. Timer semantics differ across this population
+       and cannot be reconciled without rewriting the projects.
     """
     names = sorted({n for frames in frames_by_rom.values() for n in frames})
 
     global_failures = dict.fromkeys(names, 0)
     for rom, frames in frames_by_rom.items():
-        if rom in SELF_REPORTING:
+        if _self_verifying(rom):
             for name, count in failures_against_peers(frames).items():
                 global_failures[name] += count
 
-    sound = dict.fromkeys(names, True)  # agrees with the consensus on every control ROM
-    for rom, frames in frames_by_rom.items():
-        if rom not in CONTROL:
-            continue
-        agreed = _consensus(frames)
-        for name, frame in frames.items():
-            if agreed is None or frame != agreed:
-                sound[name] = False
-
     out = []
     for rom, frames in sorted(frames_by_rom.items()):
-        by_verdict = failures_against_peers(frames) if rom in SELF_REPORTING else None
-        for name in sorted(frames):
-            if by_verdict is not None:
-                out.append(
-                    Eligibility(name, rom, by_verdict[name] == 0, "verdict", global_failures[name])
-                )
-            else:
-                out.append(Eligibility(name, rom, sound[name], "proxy", global_failures[name]))
+        if _timer_dependent(rom):
+            out += [
+                Eligibility(n, rom, False, "excluded: timer-dependent", global_failures[n])
+                for n in sorted(frames)
+            ]
+            continue
+        if _self_verifying(rom):
+            by_verdict = failures_against_peers(frames)
+            out += [
+                Eligibility(n, rom, by_verdict[n] == 0, "verdict", global_failures[n])
+                for n in sorted(frames)
+            ]
+            continue
+        out += [
+            Eligibility(n, rom, global_failures[n] == 0, "fully-clean", global_failures[n])
+            for n in sorted(frames)
+        ]
     return out
 
 

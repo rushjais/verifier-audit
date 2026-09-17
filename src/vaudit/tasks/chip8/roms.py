@@ -40,6 +40,8 @@ class Rom:
     role: str  # "quirk-free" | "correctness" | "disagreement"
     purpose: str
     usable: bool = True
+    timer_dependent: bool = False  # Amendment 2 rule 3: excluded from the study
+    self_verifying: bool = False  # renders its own pass/fail marks
 
     @property
     def path(self) -> Path:
@@ -71,18 +73,24 @@ ROMS: tuple[Rom, ...] = (
         "3-corax+.ch8",
         "correctness",
         "per-opcode correctness; failing it means wrong, not different",
+        self_verifying=True,
     ),
     Rom(
         "flags",
         "4-flags.ch8",
         "correctness",
         "VF/flag correctness across arithmetic and logical ops",
+        self_verifying=True,
     ),
     Rom(
         "quirks",
         "5-quirks.ch8",
         "disagreement",
-        "exercises the five behaviours correct interpreters genuinely disagree on",
+        "exercises the five behaviours correct interpreters genuinely disagree on — but its "
+        "delay-timer loop MEASURES interpreter speed to test the display-wait quirk, and timer "
+        "semantics are not normalised across this population, so Amendment 2 rule 3 excludes it",
+        usable=False,
+        timer_dependent=True,
     ),
     Rom(
         "keypad",
@@ -90,8 +98,11 @@ ROMS: tuple[Rom, ...] = (
         "disagreement",
         "requires live key input, which this harness never delivers",
         usable=False,
+        timer_dependent=True,
+        self_verifying=True,
     ),
 )
+
 
 BY_KEY = {rom.key: rom for rom in ROMS}
 
