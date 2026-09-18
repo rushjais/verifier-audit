@@ -498,7 +498,10 @@ replaced with cheats chosen after seeing the numbers.
 | 22 | the corrected curve predicts four held-back densities to ±0.04 | **miss**, narrowly — three inside ±0.01, the fourth off by 0.049. Errs low at high density, as registered |
 | 23 | block occupancy, not density, controls SSIM — and flips a verdict | **split** — mechanism confirmed hard (blank scores 0.9683 vs 0.0027 at identical density), no verdict flipped, so falsified as written |
 
-Twelve evaluated, six hit, one marginal, one split, four missed. The Amendment 8/10 study
+| 20 | ROM D: a second relocation quirk fails exactly like ROM A | **hit** — identical figures, 0.9375 vs 0.9688, nothing separates |
+| 21 | ROM E: a second substitution quirk separates exactly like ROM B | **hit** — 0.9943 and 0.9980, both above blank |
+
+Fourteen evaluated, eight hit, one marginal, one split, four missed. The Amendment 8/10 study
 falsified four of its five predictions, including both registered out of sample, and is the most
 useful thing in this document for exactly that reason: it replaced a scope concession with a
 closed-form boundary, and it cost the headline its generality. **#13 was registered as one I expected to get wrong**, and

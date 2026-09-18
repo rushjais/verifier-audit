@@ -132,3 +132,55 @@ def test_the_corrected_boundary_beats_a_constant_on_the_registered_grid():
     assert obs is not None
     assert abs(obs - 1 / (2 * (1 - 0.30))) < 0.04, obs
     assert obs > 0.60, f"a density-independent phi=0.5 boundary would predict ~0.5, got {obs}"
+
+
+# --- Amendment 9: ROM D and ROM E ---------------------------------------------------------------
+
+
+def test_rom_d_and_e_isolate_their_target_quirk_and_nothing_else():
+    """Gates 1-3, which need no population."""
+    from vaudit.tasks.chip8.quirk_roms import (
+        JUMP_ROM,
+        JUMP_TARGET,
+        VFRESET_ROM,
+        VFRESET_TARGET,
+        check,
+    )
+
+    for rom, target in ((JUMP_ROM, JUMP_TARGET), (VFRESET_ROM, VFRESET_TARGET)):
+        got = check(rom, target=target)
+        assert got.timer_free, target
+        assert got.sensitive_to_target, target
+        assert not got.spurious, (target, got.spurious)
+        assert got.settles_at is not None, target
+
+
+def test_rom_d_relocates_and_rom_e_substitutes():
+    """Predictions 20 and 21 turn on the geometry, so pin the geometry itself."""
+    from vaudit.tasks.chip8.core import CHIP48, COSMAC_VIP
+    from vaudit.tasks.chip8.harness import WIDTH, NativeInterpreter
+    from vaudit.tasks.chip8.quirk_roms import JUMP_ROM, VFRESET_ROM
+
+    def cols(rom, quirks):
+        f = NativeInterpreter("t", quirks).frames(rom, 30)[-1]
+        lit = [x for y in range(32) for x, v in enumerate(f[y * WIDTH : (y + 1) * WIDTH]) if v]
+        return (min(lit), max(lit)), sum(1 for b in f if b)
+
+    d_ref, d_div = cols(JUMP_ROM, COSMAC_VIP), cols(JUMP_ROM, CHIP48)
+    assert d_ref == ((4, 7), 14) and d_div == ((16, 19), 14), (d_ref, d_div)
+    assert d_div[0][0] - d_ref[0][0] == 12, "must clear the 8-wide block, or it is not relocation"
+
+    e_ref, e_div = cols(VFRESET_ROM, COSMAC_VIP), cols(VFRESET_ROM, CHIP48)
+    assert e_ref[0] == e_div[0] == (0, 3), (e_ref, e_div)
+    assert e_ref[1] == e_div[1] == 14, "substitution keeps the lit count and the position"
+
+
+def test_acceptance_reports_whether_the_population_actually_split():
+    """Gate 5. Amendment 9 required a split in prose; the four gates never checked it."""
+    from vaudit.tasks.chip8.quirk_roms import Acceptance
+
+    unanimous = Acceptance(True, True, (), (), 2, ("a", "b"), behaviours=1)
+    split = Acceptance(True, True, (), (), 2, ("a", "b"), behaviours=2)
+    assert not unanimous.population_splits
+    assert split.population_splits
+    assert unanimous.accepted, "a unanimous ROM is still well-formed; gate 5 is reported, not fatal"

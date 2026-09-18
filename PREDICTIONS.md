@@ -686,3 +686,50 @@ in every block SSIM's luminance and contrast terms are dominated by the stabilis
 therefore partly an artefact of those constants. This does not affect whether a grader would
 accept it — a number is a number, and that is the point — but any claim about *why* it scores what
 it does has to say so.
+
+---
+
+# OUTCOMES — Amendment 9 (2026-09-17)
+
+Both ROMs were built to the registered designs and pass all four Amendment 3 gates.
+
+| | ROM D — `jump.ch8` | ROM E — `vfreset.ch8` |
+| --- | --- | --- |
+| quirk | `BNNN` jump offset | `8XY1/2/3` VF reset |
+| bytes | 26 | 20 |
+| reference frame | glyph at x=4 | glyph `0` at (0,0) |
+| divergent frame | glyph at x=16 | glyph `3` at (0,0) |
+| kind | relocation, 2 blocks | substitution, 1 block |
+| gates 1–4 | all PASS | all PASS |
+
+**Prediction 20 holds.** ROM D reproduces ROM A exactly — pixel proportion 0.9863, GMSD 0.8219,
+SSIM 0.9375 against a blank screen's 0.9932 / 0.8730 / 0.9688, and **no strategy separates**. A
+different quirk producing the same geometry produces the same failure, which is what the
+prediction was for: had it separated, §4.6's mechanism would have been wrong.
+
+**Prediction 21 holds.** ROM E reproduces ROM B — pixel proportion 0.9980 and SSIM 0.9943, both
+above the blank screen, both separating. Substitution is scored correctly regardless of which
+quirk produces it.
+
+**And both ROMs are inert as population tests, which Amendment 9 required be reported.** All seven
+interpreters produce the *same* frame on each: every one of them implements the VIP reading of
+`BNNN` and of VF reset. The divergent frame in both tables therefore comes from my own
+quirk-configured harness, not from any third-party interpreter. So ROM D and ROM E test the
+**mechanism** — geometry predicts outcome — and say nothing about a real population disagreement,
+unlike ROMs A, B and C, where the population genuinely split.
+
+That is itself a small finding worth recording: of the five documented quirks, this population
+varies on **three** (`shift_uses_vy`, `memory_increments_i`, `sprites_wrap`) and is unanimous on
+**two** (`jump_uses_vx`, `vf_reset`). The quirks that divide real implementations are a subset of
+the quirks that divide the documentation.
+
+**A gate that did not check what it said.** Amendment 9 wrote "the population must genuinely
+split — a ROM every interpreter agrees on tests nothing" as a requirement, and `check()` never
+tested it: gate 4 only asks whether at least two third parties reproduced *either* expected frame,
+which a unanimous population satisfies. Both ROMs passed all four gates while testing nothing
+about the population. `Acceptance.population_splits` is now reported as **gate 5**, and it fails
+for ROM D and ROM E. It is reported rather than folded into `accepted`, because it is a fact about
+the population rather than about whether the ROM is well-formed.
+
+This is another instance of the pattern in §2 — a requirement written in prose, believed to be
+enforced, and inert — and it is logged there.
