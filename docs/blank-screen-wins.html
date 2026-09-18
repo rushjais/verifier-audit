@@ -371,7 +371,7 @@
   </section>
 
   <section>
-    <h2 class="col">Three kinds of divergence, one quirk each</h2>
+    <h2 class="col">Three kinds of divergence, five quirks, every one of them pre-registered</h2>
     <div class="screens">
       <figure class="screen">
         <figcaption class="cap">A <em>— relocation, 2 blocks</em></figcaption>
@@ -399,7 +399,7 @@
         <thead>
           <tr>
             <th scope="col">ROM</th><th scope="col">Quirk</th><th scope="col">Kind</th>
-            <th scope="col">Blocks</th><th scope="col">Worst correct</th>
+            <th scope="col">Blocks</th><th scope="col">Worst correct (SSIM)</th>
             <th scope="col">Blank</th><th scope="col">Separates?</th>
           </tr>
         </thead>
@@ -416,9 +416,29 @@
             <td>C · wrap.ch8</td><td>sprite wrap vs clip</td><td>partial addition</td><td>1</td>
             <td>0.9688</td><td>0.9375</td><td>pixel prop., SSIM</td>
           </tr>
+          <tr>
+            <td>D · jump.ch8</td><td>BNNN jump offset</td><td>relocation</td><td>2</td>
+            <td class="bad">0.9375</td><td>0.9688</td><td class="bad">none of the five</td>
+          </tr>
+          <tr>
+            <td>E · vfreset.ch8</td><td>8XY1 VF reset</td><td>substitution</td><td>1</td>
+            <td>0.9943</td><td>0.9688</td><td>pixel prop., SSIM</td>
+          </tr>
         </tbody>
       </table>
     </div>
+    <p class="foot">
+      <strong>D and E are replications, registered as such before they existed.</strong> ROM D
+      reaches relocation through a different instruction entirely — <code>BNNN</code> adds
+      <code>V0</code> on the VIP and <code>VX</code> on CHIP-48, so the two conventions jump to
+      <em>different instructions</em>, and the VIP path has to leap over the CHIP-48 path or it
+      falls through and overwrites its own answer. It reproduces ROM A to four decimal places. ROM
+      E reaches substitution through a register that cannot be drawn at all, routing the VF flag
+      into the font index so the two conventions render <code>0</code> or <code>3</code> in the
+      same place; it reproduces ROM B. <strong>Geometry predicts the outcome; the quirk that
+      produced it does not.</strong> Either one separating differently would have meant the
+      mechanism was wrong.
+    </p>
     <p class="foot">
       This narrows the finding and is the more useful version of it: <strong>block-pooled
       similarity has a predictable blind spot for divergences that move something.</strong> A quirk
@@ -630,6 +650,18 @@ displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free l
         pass/fail marks, read positionally — not by agreement with my implementation. One of the
         seven fails nothing its peers pass; the other six each have a defect traced to a line in
         their own source.
+      </li>
+      <li>
+        <strong>Do real interpreters actually disagree on all five quirks?</strong> No — on three.
+        ROMs A, B and C split the population for real, 2 against 5. On <strong>D and E every one of
+        the seven produces the same frame</strong>: all of them implement the VIP reading of
+        <code>BNNN</code> and of VF reset, so those two divergent frames come from my own
+        quirk-configured harness rather than from any third-party interpreter. D and E therefore
+        test the mechanism and say nothing about a real disagreement, and the small finding in that
+        is worth stating: the quirks that divide real implementations are a <em>subset</em> of the
+        quirks that divide the documentation. Both ROMs cleared all four acceptance gates anyway,
+        which is its own problem — the gates required a population split in prose and never checked
+        for one, so a fifth gate now reports it, and both ROMs fail it.
       </li>
     </ul>
   </section>
