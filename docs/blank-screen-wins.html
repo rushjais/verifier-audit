@@ -1,0 +1,534 @@
+<title>Blank Screen Wins</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  /* Dark-first: the bare :root carries the primary (dark) palette; light is
+     redefined below, guarded so an explicit choice wins in both directions.
+     The depicted screens stay dark in both themes — they are hardware. */
+  :root {
+    --ground:    #12151c;
+    --panel:     #1a1f2a;
+    --panel-2:   #202634;
+    --rule:      #2c3342;
+    --ink:       #e7e3da;
+    --ink-2:     #9aa3b4;
+    --ink-3:     #6b7486;
+    --phosphor:  #f0a830;
+    --screen:    #090b0f;
+    --screen-e:  #222835;
+    --fail:      #e0574f;
+    --ref:       #6fb3a8;
+    --shadow:    0 1px 0 rgba(255,255,255,.03), 0 12px 28px -18px rgba(0,0,0,.9);
+
+    --measure: 68ch;
+    --s1: .375rem; --s2: .75rem; --s3: 1.25rem; --s4: 2rem; --s5: 3.25rem; --s6: 5rem;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --ground:   #f2f0ea;
+      --panel:    #ffffff;
+      --panel-2:  #f7f5ef;
+      --rule:     #dcd7cb;
+      --ink:      #1b1e25;
+      --ink-2:    #5a6170;
+      --ink-3:    #868d9c;
+      --phosphor: #b56f0c;
+      --fail:     #b4332c;
+      --ref:      #2f7268;
+      --shadow:   0 1px 0 rgba(255,255,255,.6), 0 10px 24px -18px rgba(24,20,10,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --ground:   #f2f0ea;
+    --panel:    #ffffff;
+    --panel-2:  #f7f5ef;
+    --rule:     #dcd7cb;
+    --ink:      #1b1e25;
+    --ink-2:    #5a6170;
+    --ink-3:    #868d9c;
+    --phosphor: #b56f0c;
+    --fail:     #b4332c;
+    --ref:      #2f7268;
+    --shadow:   0 1px 0 rgba(255,255,255,.6), 0 10px 24px -18px rgba(24,20,10,.35);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font: 400 1.0625rem/1.65 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: var(--s5) var(--s3) var(--s6);
+  }
+  .wrap { max-width: 78rem; margin: 0 auto; }
+  .col  { max-width: var(--measure); }
+
+  /* ---- type ---- */
+  h1 {
+    font: 600 clamp(2.2rem, 5.2vw, 3.6rem)/1.06 "IBM Plex Serif", Georgia, serif;
+    letter-spacing: -.022em;
+    text-wrap: balance;
+    margin: 0 0 var(--s3);
+    max-width: 30ch;
+  }
+  h2 {
+    font: 600 1.375rem/1.25 "IBM Plex Serif", Georgia, serif;
+    letter-spacing: -.012em; text-wrap: balance;
+    margin: 0 0 var(--s2);
+  }
+  h3 {
+    font: 600 .8125rem/1.3 "IBM Plex Mono", ui-monospace, monospace;
+    text-transform: uppercase; letter-spacing: .1em;
+    color: var(--ink-2);
+    margin: 0 0 var(--s2);
+  }
+  p { margin: 0 0 var(--s3); }
+  .lede { font-size: 1.1875rem; line-height: 1.6; }
+  .lede strong { font-weight: 600; }
+  a { color: var(--ink); text-decoration-color: var(--phosphor); text-underline-offset: .18em; }
+  a:focus-visible { outline: 2px solid var(--phosphor); outline-offset: 3px; border-radius: 2px; }
+  code, .num { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  code { font-size: .9em; color: var(--ink-2); }
+
+  .eyebrow {
+    font: 500 .75rem/1 "IBM Plex Mono", monospace;
+    text-transform: uppercase; letter-spacing: .16em;
+    color: var(--phosphor);
+    margin: 0 0 var(--s3);
+    display: flex; flex-wrap: wrap; gap: var(--s2) var(--s3);
+  }
+  .eyebrow span { color: var(--ink-3); }
+
+  section { margin-top: var(--s5); }
+  hr { border: 0; border-top: 1px solid var(--rule); margin: var(--s5) 0 0; }
+
+  /* ---- screens ---- */
+  .screens { display: flex; flex-wrap: wrap; gap: var(--s3); margin: 0 0 var(--s3); }
+  .screen { flex: 1 1 15rem; min-width: 13rem; }
+  .screen figcaption { margin-bottom: var(--s1); }
+  .crt {
+    display: block; width: 100%; height: auto;
+    background: var(--screen);
+    border: 1px solid var(--screen-e);
+    border-radius: 3px;
+    image-rendering: pixelated;
+  }
+  .crt rect.lit  { fill: var(--phosphor); }
+
+  .cap  { font: 500 .8125rem/1.35 "IBM Plex Mono", monospace; color: var(--ink); }
+  .cap em { font-style: normal; color: var(--ink-3); font-weight: 400; }
+  .verdict {
+    margin-top: var(--s2);
+    font: 500 .8125rem/1.45 "IBM Plex Mono", monospace;
+    color: var(--ink-2);
+    display: flex; justify-content: space-between; gap: var(--s2);
+    border-top: 1px solid var(--rule); padding-top: var(--s1);
+  }
+  .verdict b { font-weight: 600; font-size: 1.05rem; color: var(--ink); }
+  .is-fail b { color: var(--fail); }
+  .is-ref   b { color: var(--ref); }
+
+  .punch {
+    max-width: var(--measure);
+    font: 400 1.0625rem/1.6 "IBM Plex Serif", Georgia, serif;
+    border-left: 2px solid var(--phosphor);
+    padding-left: var(--s3);
+    color: var(--ink);
+    margin: var(--s3) 0 0;
+  }
+
+  /* ---- tables ---- */
+  .scroll { overflow-x: auto; margin: 0 0 var(--s2); }
+  table {
+    border-collapse: collapse; width: 100%;
+    font: 400 .875rem/1.4 "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  caption {
+    text-align: left; color: var(--ink-3);
+    font: 400 .8125rem/1.4 "IBM Plex Sans", sans-serif;
+    padding-bottom: var(--s2);
+  }
+  th, td { padding: .55rem .8rem; text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th {
+    font-weight: 500; font-size: .75rem; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--ink-3); border-bottom: 1px solid var(--rule);
+  }
+  tbody tr + tr td { border-top: 1px solid var(--rule); }
+  tbody tr.ref td { color: var(--ref); }
+  td.bad  { color: var(--fail); font-weight: 600; }
+  td.hi   { color: var(--phosphor); font-weight: 600; }
+  tr.cheat td:first-child::before {
+    content: "cheat"; display: inline-block;
+    font-size: .625rem; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ground); background: var(--fail);
+    padding: .1rem .3rem; border-radius: 2px; margin-right: .5rem;
+    vertical-align: .05em;
+  }
+  .foot { font-size: .8125rem; color: var(--ink-3); max-width: var(--measure); margin: 0; }
+
+  /* ---- chart ---- */
+  .chart { width: 100%; height: auto; display: block; margin-bottom: var(--s2); }
+  .chart .grid  { stroke: var(--rule); stroke-width: 1; }
+  .chart .axis  { stroke: var(--ink-3); stroke-width: 1; }
+  .chart .lbl   { fill: var(--ink-3); font: 400 12px "IBM Plex Mono", monospace; }
+  .chart .lbl-i { fill: var(--ink-2); font: 500 12px "IBM Plex Mono", monospace; }
+  .chart .ser   { fill: none; stroke: var(--phosphor); stroke-width: 2; }
+  .chart .dot   { fill: var(--phosphor); }
+  .chart .blank { stroke: var(--fail); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+  .chart .blank-t { fill: var(--fail); font: 500 12px "IBM Plex Mono", monospace; }
+
+  /* ---- panels ---- */
+  .panel {
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 4px;
+    padding: var(--s3); box-shadow: var(--shadow);
+  }
+  .rom { display: grid; gap: var(--s3); grid-template-columns: 1fr; margin-bottom: var(--s3); }
+  @media (min-width: 52rem) { .rom { grid-template-columns: 1.1fr 1fr; align-items: start; } }
+  pre {
+    margin: 0; overflow-x: auto;
+    background: var(--panel-2); border: 1px solid var(--rule); border-radius: 4px;
+    padding: var(--s3);
+    font: 400 .8125rem/1.6 "IBM Plex Mono", monospace; color: var(--ink-2);
+  }
+  pre b { color: var(--phosphor); font-weight: 500; }
+
+  ul { margin: 0 0 var(--s3); padding-left: 1.1rem; }
+  li { margin-bottom: var(--s2); }
+  li::marker { color: var(--ink-3); }
+
+  .end {
+    margin-top: var(--s5); padding-top: var(--s3);
+    border-top: 1px solid var(--rule);
+    font: 400 .875rem/1.6 "IBM Plex Mono", monospace; color: var(--ink-3);
+    display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); justify-content: space-between;
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">
+    Reference-based grading <span>/</span> CHIP-8 <span>/</span> 2026-09-17
+  </p>
+
+  <h1>A correct emulator scored below a blank screen</h1>
+
+  <div class="col">
+    <p class="lede">
+      Grade an emulator by comparing its frame to a reference implementation's and you need a
+      similarity measure. <strong>SSIM</strong> is the usual answer — it is what
+      <a href="https://gbaeval.com/blog/grading-iteration">GBA&nbsp;Eval settled on</a> after
+      rejecting four alternatives. On the test below, SSIM scores a correct interpreter at
+      <span class="num">0.9375</span> and an emulator that draws <em>nothing at all</em> at
+      <span class="num">0.9688</span>. Pixel proportion and GMSD rank them the same way.
+      Every number here recomputes from the repository.
+    </p>
+  </div>
+
+  <h3>One 16-byte ROM, three frames, 14 lit pixels out of 2048</h3>
+  <div class="screens">
+    <figure class="screen">
+      <figcaption class="cap">Reference <em>— COSMAC VIP</em></figcaption>
+      <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="Glyph zero drawn at x=4"><rect class="lit" x="4" y="0" width="4" height="1"/><rect class="lit" x="4" y="1" width="1" height="1"/><rect class="lit" x="7" y="1" width="1" height="1"/><rect class="lit" x="4" y="2" width="1" height="1"/><rect class="lit" x="7" y="2" width="1" height="1"/><rect class="lit" x="4" y="3" width="1" height="1"/><rect class="lit" x="7" y="3" width="1" height="1"/><rect class="lit" x="4" y="4" width="4" height="1"/></svg>
+      <p class="verdict is-ref"><span>SSIM</span> <b>1.0000</b></p>
+    </figure>
+    <figure class="screen">
+      <figcaption class="cap">Also correct <em>— CHIP-48</em></figcaption>
+      <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="The same glyph drawn four pixels to the right, at x=8"><rect class="lit" x="8" y="0" width="4" height="1"/><rect class="lit" x="8" y="1" width="1" height="1"/><rect class="lit" x="11" y="1" width="1" height="1"/><rect class="lit" x="8" y="2" width="1" height="1"/><rect class="lit" x="11" y="2" width="1" height="1"/><rect class="lit" x="8" y="3" width="1" height="1"/><rect class="lit" x="11" y="3" width="1" height="1"/><rect class="lit" x="8" y="4" width="4" height="1"/></svg>
+      <p class="verdict is-fail"><span>SSIM</span> <b>0.9375</b></p>
+    </figure>
+    <figure class="screen">
+      <figcaption class="cap">Draws nothing <em>— a cheat</em></figcaption>
+      <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="An entirely blank screen"></svg>
+      <p class="verdict"><span>SSIM</span> <b>0.9688</b></p>
+    </figure>
+  </div>
+
+  <p class="punch">
+    The middle screen is not a bug. Two real CHIP-8 conventions disagree about one instruction, so
+    the glyph is drawn four pixels apart — and both are right. The grader ranks that legitimate
+    difference <em>below</em> a submission that renders an empty display.
+  </p>
+
+  <hr>
+
+  <section class="col">
+    <h2>Why this is worth a page</h2>
+    <p>
+      A grader like this is the reward signal in a reinforcement-learning environment. If it ranks
+      a correct implementation below one that does nothing, then the compute spent on that rollout
+      is not wasted — it is actively teaching the model that correct behaviour is wrong. Mechanize
+      argues that <a href="https://www.mechanize.work/blog/cheap-rl-tasks-will-waste-compute/">cheap
+      RL tasks waste compute</a>; this is the same argument one level down, about the grader rather
+      than the task.
+    </p>
+    <p>
+      What makes this measurable rather than hypothetical is that the divergence comes from a
+      <em>real</em> platform disagreement, not a synthetic perturbation. And what makes it a
+      demonstration rather than a discovery is stated plainly below.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="col">The test</h2>
+    <div class="rom">
+      <div class="col">
+        <p>
+          <code>8XY6</code> is a shift. The original COSMAC VIP shifts <code>VY</code> into
+          <code>VX</code>; CHIP-48 and SUPER-CHIP shift <code>VX</code> in place. Both are
+          documented, and interpreters in the wild do both. This ROM computes an x position with
+          that instruction and draws the font glyph <code>0</code> there — so a correct interpreter
+          draws the same 14 pixels at <strong>x=4</strong> or <strong>x=8</strong>, depending only
+          on which convention it follows.
+        </p>
+        <p class="foot">
+          The ROM's design and the predictions about it were registered before the bytes existed,
+          and it had to pass four acceptance gates before any similarity measure touched it. Two
+          more ROMs, covering different kinds of divergence, are below.
+        </p>
+      </div>
+<pre>: main
+  v1 := 0x10
+  v2 := 0x08
+  <b>v1 >>= v2</b>      # VIP: v1 = v2>>1 = 4
+                 # CHIP-48: v1 = v1>>1 = 8
+  v0 := 0
+  i := hex v0    # the interpreter's OWN font
+  v3 := 0
+  sprite v1 v3 5
+  loop again</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="col">All five grading strategies, on that ROM</h2>
+    <div class="scroll">
+      <table>
+        <caption>
+          Similarity to the reference frame, where 1.0000 is identical. Seven third-party
+          interpreters were run; they produce exactly two distinct correct frames, split 2&nbsp;/&nbsp;5.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Candidate</th>
+            <th scope="col">Exact</th>
+            <th scope="col">Pixel prop.</th>
+            <th scope="col">Thresholded</th>
+            <th scope="col">GMSD</th>
+            <th scope="col">SSIM</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="ref">
+            <td>Reference (VIP)</td>
+            <td>1.0000</td><td>1.0000</td><td>1.0000</td><td>1.0000</td><td>1.0000</td>
+          </tr>
+          <tr>
+            <td>Correct, CHIP-48 convention</td>
+            <td>0.0000</td><td>0.9863</td><td>1.0000</td><td>0.8492</td><td class="bad">0.9375</td>
+          </tr>
+          <tr class="cheat">
+            <td>Blank screen</td>
+            <td>0.0000</td><td class="hi">0.9932</td><td>1.0000</td><td class="hi">0.8730</td><td class="hi">0.9688</td>
+          </tr>
+          <tr class="cheat">
+            <td>Inverted palette</td>
+            <td>0.0000</td><td>0.0000</td><td>0.0000</td><td class="hi">1.0000</td><td>−0.0160</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="foot">
+      Amber marks a score the measure gave a <em>cheat</em>; red marks the correct implementation it
+      was ranked above. <strong>No threshold separates correct from cheating under any of the
+      five.</strong> Exact match rejects both correct frames. Thresholding at τ=.05 accepts the
+      blank screen. And GMSD scores a <em>wholly inverted</em> frame at exactly 1.0000, because
+      gradient magnitude is invariant under inversion — |∇(1−x)| = |∇x| — so every edge sits where
+      it did and the measure reports perfection for an image wrong in every pixel.
+    </p>
+  </section>
+
+  <section class="col">
+    <h2>The mechanism, which is not an implementation bug</h2>
+    <p>
+      SSIM pools over blocks. Moving the glyph four pixels disturbs <strong>two</strong> 8×8 blocks
+      — the one it left and the one it entered — while erasing it entirely disturbs
+      <strong>one</strong>. A measure that averages over blocks therefore penalises relocation more
+      than deletion. That is a property of the measure, not of this ROM.
+    </p>
+    <p>
+      The prediction that follows is falsifiable, so it was registered and run: a divergence that
+      changes <em>what</em> is drawn without moving it should score better. It does.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="col">Three kinds of divergence, one quirk each</h2>
+    <div class="screens">
+      <figure class="screen">
+        <figcaption class="cap">A <em>— relocation, 2 blocks</em></figcaption>
+        <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="Glyph zero at x=8, four pixels right of the reference"><rect class="lit" x="8" y="0" width="4" height="1"/><rect class="lit" x="8" y="1" width="1" height="1"/><rect class="lit" x="11" y="1" width="1" height="1"/><rect class="lit" x="8" y="2" width="1" height="1"/><rect class="lit" x="11" y="2" width="1" height="1"/><rect class="lit" x="8" y="3" width="1" height="1"/><rect class="lit" x="11" y="3" width="1" height="1"/><rect class="lit" x="8" y="4" width="4" height="1"/></svg>
+        <p class="verdict is-fail"><span>vs blank</span> <b>0.9375</b></p>
+      </figure>
+      <figure class="screen">
+        <figcaption class="cap">B <em>— substitution, 1 block</em></figcaption>
+        <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="Glyph zero drawn in the top-left corner"><rect class="lit" x="0" y="0" width="4" height="1"/><rect class="lit" x="0" y="1" width="1" height="1"/><rect class="lit" x="3" y="1" width="1" height="1"/><rect class="lit" x="0" y="2" width="1" height="1"/><rect class="lit" x="3" y="2" width="1" height="1"/><rect class="lit" x="0" y="3" width="1" height="1"/><rect class="lit" x="3" y="3" width="1" height="1"/><rect class="lit" x="0" y="4" width="4" height="1"/></svg>
+        <p class="verdict is-ref"><span>vs blank</span> <b>0.9943</b></p>
+      </figure>
+      <figure class="screen">
+        <figcaption class="cap">C <em>— partial addition, 1 block</em></figcaption>
+        <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="Glyph clipped at the right edge of the screen"><rect class="lit" x="62" y="0" width="2" height="1"/><rect class="lit" x="62" y="1" width="1" height="1"/><rect class="lit" x="62" y="2" width="1" height="1"/><rect class="lit" x="62" y="3" width="1" height="1"/><rect class="lit" x="62" y="4" width="2" height="1"/></svg>
+        <p class="verdict is-ref"><span>vs blank</span> <b>0.9688</b></p>
+      </figure>
+    </div>
+    <div class="scroll">
+      <table>
+        <caption>
+          Each ROM isolates a different quirk. The blank-screen column is the bar a correct
+          implementation has to clear; “separates” means some threshold admits every correct frame
+          and rejects every cheat.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">ROM</th><th scope="col">Quirk</th><th scope="col">Kind</th>
+            <th scope="col">Blocks</th><th scope="col">Worst correct</th>
+            <th scope="col">Blank</th><th scope="col">Separates?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A · shift.ch8</td><td>8XY6 shift source</td><td>relocation</td><td>2</td>
+            <td class="bad">0.9375</td><td>0.9688</td><td class="bad">none of the five</td>
+          </tr>
+          <tr>
+            <td>B · digit.ch8</td><td>FX55 index increment</td><td>substitution</td><td>1</td>
+            <td>0.9943</td><td>0.9688</td><td>pixel prop., SSIM</td>
+          </tr>
+          <tr>
+            <td>C · wrap.ch8</td><td>sprite wrap vs clip</td><td>partial addition</td><td>1</td>
+            <td>0.9688</td><td>0.9375</td><td>pixel prop., SSIM</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="foot">
+      This narrows the finding and is the more useful version of it: <strong>block-pooled
+      similarity has a predictable blind spot for divergences that move something.</strong> A quirk
+      that changes <em>where</em> output is drawn scores worse than drawing nothing; a quirk that
+      changes <em>what</em> is drawn in the same place is scored correctly. ROM&nbsp;C also turned up
+      a defect in two interpreters that had passed every other ROM available here — they place
+      wrapped columns one row low, computing the framebuffer index as
+      <code>(x + i + (y+h)*64) % 2048</code>.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="col">The score tracks block count, not distance</h2>
+    <svg class="chart" viewBox="0 0 780 384" role="img"
+         aria-label="SSIM against displacement. The score falls to 0.9375 by four pixels and stays exactly flat through eight, sixteen and twenty-four pixels. The blank screen's score of 0.9688 sits above every one of them.">
+      <g class="grid">
+        <line x1="96" y1="57.3"  x2="726" y2="57.3"/>
+        <line x1="96" y1="126.7" x2="726" y2="126.7"/>
+        <line x1="96" y1="196"   x2="726" y2="196"/>
+        <line x1="96" y1="265.3" x2="726" y2="265.3"/>
+      </g>
+      <g class="lbl" text-anchor="end">
+        <text x="86" y="61.3">1.0000</text>
+        <text x="86" y="130.7">0.9800</text>
+        <text x="86" y="200">0.9600</text>
+        <text x="86" y="269.3">0.9400</text>
+      </g>
+      <line class="axis" x1="96" y1="300" x2="726" y2="300"/>
+      <line class="blank" x1="96" y1="165.5" x2="726" y2="165.5"/>
+      <text class="blank-t" x="726" y="157" text-anchor="end">blank screen · 0.9688</text>
+      <polyline class="ser" points="96,57.3 201,231.4 306,248.7 411,274 516,274 621,274 726,274"/>
+      <g class="dot">
+        <circle cx="96"  cy="57.3"  r="4"/>
+        <circle cx="201" cy="231.4" r="4"/>
+        <circle cx="306" cy="248.7" r="4"/>
+        <circle cx="411" cy="274"   r="4"/>
+        <circle cx="516" cy="274"   r="4"/>
+        <circle cx="621" cy="274"   r="4"/>
+        <circle cx="726" cy="274"   r="4"/>
+      </g>
+      <g class="lbl" text-anchor="middle">
+        <text x="96"  y="322">0</text>
+        <text x="201" y="322">1</text>
+        <text x="306" y="322">2</text>
+        <text x="411" y="322">4</text>
+        <text x="516" y="322">8</text>
+        <text x="621" y="322">16</text>
+        <text x="726" y="322">24</text>
+      </g>
+      <text class="lbl-i" x="411" y="352" text-anchor="middle">displacement between the two correct frames, in pixels</text>
+      <text class="lbl" x="411" y="374" text-anchor="middle">categories evenly spaced; the axis is not linear</text>
+    </svg>
+    <p class="foot">
+      A 24-pixel shift scores <strong>identically</strong> to a 4-pixel one — six times the distance,
+      <span class="num">0.9375</span> either way — because both disturb the same two blocks. The
+      score declines only while the glyph positions still overlap, then goes constant. And SSIM sits
+      below the blank screen at <em>every</em> non-zero displacement, so the failure is not an
+      artefact of the magnitude first chosen. Predicted before the run, on the mechanism above.
+    </p>
+  </section>
+
+  <section class="col">
+    <h2>Checks I would want to see, if this were someone else's page</h2>
+    <ul>
+      <li>
+        <strong>Is it my SSIM?</strong> No. Mine uses 8×8 blocks, matching the published
+        description. Swapping in scikit-image's default 7×7 sliding window moves the numbers and
+        changes no conclusion: <span class="num">0.9581</span> for ROM&nbsp;A against
+        <span class="num">0.9735</span> for the blank screen. One difference worth recording — the
+        sliding-window version does decline mildly with distance where the block version is flat, so
+        “block count, not distance” is exact for block pooling and approximate for window pooling.
+      </li>
+      <li>
+        <strong>Does one reference hide this?</strong> Yes, completely. Scored against the reference
+        alone, exact match, pixel proportion and SSIM all look sound — because at n=1 the population
+        <em>is</em> the yardstick and scores 1.0 by definition. Over seven interpreters containing
+        one legitimate variation, none of the five separates. The n=1 table reads like a passing
+        grade, which is the point.
+      </li>
+      <li>
+        <strong>Are the correct frames really correct?</strong> Adjudicated by the test ROM's own
+        pass/fail marks, read positionally — not by agreement with my implementation. One of the
+        seven fails nothing its peers pass; the other six each have a defect traced to a line in
+        their own source.
+      </li>
+    </ul>
+  </section>
+
+  <section class="col">
+    <h2>What is new here, and what is not</h2>
+    <p>
+      <strong>Not new:</strong> SSIM's sensitivity to small translations is a documented drawback
+      with a purpose-built fix — CW-SSIM, Wang and Simoncelli, 2005. The pixel-proportion result is
+      a replication; GBA Eval reported it themselves. GMSD's invariance under inversion follows from
+      its construction. A page claiming to have discovered any of that would be wrong.
+    </p>
+    <p>
+      <strong>What the literature did not have:</strong> the consequence for a reference-based
+      grader — that a documented metric property means a correct implementation is ranked below an
+      empty screen, reachable through a legitimate platform disagreement rather than an adversarial
+      input, with nothing in the score announcing which regime you are in.
+    </p>
+    <p>
+      <strong>Scope, and it matters:</strong> this runs on three authored ROMs, one quirk each, with
+      a 14-pixel glyph on a 64×32 monochrome display. GBA Eval's frames are 240×160 and in colour,
+      where the same displacement disturbs a very different fraction of the image.
+      <em>This is not a claim that their grader mis-ranks their submissions.</em> It is a
+      demonstration that the metric they settled on has a regime where it does, that the regime is
+      reachable by a legitimate quirk difference, and that whether their frames sit in it is
+      measurable and not measured here.
+    </p>
+  </section>
+
+  <p class="end">
+    <span>Rushil Jaiswal · built with Claude Code, directed and reviewed by me</span>
+    <span><a href="https://github.com/rushjais/verifier-audit">github.com/rushjais/verifier-audit</a> — ROM sources, the seven adapters, and the pre-registered predictions with dated amendments</span>
+  </p>
+
+</div>
