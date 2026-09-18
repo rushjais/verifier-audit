@@ -1,13 +1,13 @@
-# Nineteen measurements that were about the wrong thing
+# Twenty measurements that were about the wrong thing
 
 **Last updated 2026-09-17.** Numbers reproduce from this repository; commands in §9.
 
 > **TL;DR.** I set out to build an instrument that detects when a grader is unfair rather than
 > merely gameable. The instrument works, and everything it measured turned out to be a replication
 > of established results — the literature search in `LITERATURE.md` is unsparing about that. What
-> the project produced that is not a replication is **a first-person record of nineteen
+> the project produced that is not a replication is **a first-person record of twenty
 > occasions, inside one small project, where a measurement was confidently about something other
-> than what it claimed**. Seventeen were introduced by the model doing the work. None was caught by
+> than what it claimed**. Eighteen were introduced by the model doing the work. None was caught by
 > the thing it broke failing at the moment it broke. They fall into four patterns, and each
 > pattern has a direct analogue in building RL graders — which is the argument this document is
 > actually making.
@@ -24,7 +24,7 @@ each defect.
 
 The project was an instrument for catching graders that are confidently wrong — that reject
 correct work, disagree with themselves, or test what the prompt never made knowable. While
-building it, the project committed that error nineteen times.
+building it, the project committed that error twenty times.
 
 That is not irony for its own sake. The failures were **recorded as they happened, with their
 causes traced, by someone who was specifically looking for that class of failure and still missed
@@ -42,25 +42,26 @@ Four things make the record worth more than the results it accompanies:
    makes a fair task look unfair and an unfair one look fine. Pattern B is a rate reported over
    the wrong population.
 4. **The project's own checks caught a minority of them.** Appendix A's surfacing column: tests
-   and tracebacks **3** (#4, #5, #8), running or verifying a documented command **4** (#3, #12,
-   #14, #17, #19), reading code or output **9**, the repository's owner **1**, an unexpected
-   state **1**. Reading beat testing better than two to one — though half of that reading was of *code*,
-   not output.
+   and tracebacks **3** (#4, #5, #8), running or verifying a documented command **5** (#3, #12,
+   #14, #17, #19), reading code or output **10**, the repository's owner **1**, an unexpected
+   state **1** — twenty. Reading beat testing better than three to one, though half of that
+   reading was of *code*, not output. **An earlier version of this line said 4 while listing five
+   ids, and summed to 18 for 19 incidents; it is corrected here rather than quietly.**
 
 The results that produced these incidents are in §4, labelled as the replications they are.
 
 ---
 
-## 2. The nineteen
+## 2. The twenty
 
-Assembled while building an instrument for the same class of failure in graders. **Seventeen were
+Assembled while building an instrument for the same class of failure in graders. **Eighteen were
 introduced by the model during this work**; #1 was in the original hackathon code, which three of
 us wrote; #2 is a property of git that nobody introduced and nobody noticed. The full list with
 causes is Appendix A.
 
-### A. The check was not running (#2, #3, #4, #8, #12, #17), and one that was never broken (#16)
+### A. The check was not running (#2, #3, #4, #8, #12, #17, #20), and one that was never broken (#16)
 
-The most common of the four — seven of nineteen — and an inert check is indistinguishable from
+The most common of the four — eight of twenty — and an inert check is indistinguishable from
 a passing one. `core.hooksPath` is local git config, so a clone has the hook files and no hook;
 and in this repository there were no hook files either, so the command §9 gave for activating the
 gate pointed at a directory that did not exist, set the config anyway, and exited 0.
@@ -68,7 +69,10 @@ gate pointed at a directory that did not exist, set the config anyway, and exite
 raised on macOS before any candidate ran, so every exploit scored 0 and every exploit looked
 sealed. Fields were added to a dataclass and the table never updated, so a tightened eligibility
 rule did nothing. `ruff check` was run and reported success while `make check` — a superset — was
-failing.
+failing. And a ROM acceptance gate required in prose that the interpreter population actually
+disagree — "a ROM every interpreter agrees on tests nothing" — while the code only asked whether
+two interpreters produced *one of* the two expected frames, which a unanimous population satisfies
+trivially. Two ROMs cleared all four gates while testing nothing.
 
 #16 belongs to this pattern from the outside and to a worse one from the inside. I observed a
 state I did not expect, wrote "cause unestablished" — and then acted on it anyway, reverting a
@@ -131,7 +135,7 @@ That correction is itself another instance — unnumbered, because it is a claim
 rather than an entry in it — and the reason the section is here.
 
 #12, #13, #14 and #15 were all found in one sitting, by running the documented commands from a
-clean clone and by checking what the shipped code measures before running it. Four of nineteen
+clean clone and by checking what the shipped code measures before running it. Four of twenty
 came from an hour of not trusting the documentation — the highest-yield hour in the project. #17
 arrived the same way and later: checking whether the gate was on, immediately before a commit
 that would have relied on it.
@@ -681,6 +685,7 @@ both hold, and both turned out stronger than the draft claimed.
 | 15 ▲ | "the sweep command reproduces §4.1 and §4.2 here" | true of §4.1, false of §4.2 — the clean-room rewrite dropped the hardening track, so this repo cannot produce that number at all | checking what the shipped sweep actually measures before running it |
 | 16 ▲ | "the repository flipped to public on its own — an incident" | it did not. The owner made it public, deliberately, using an option I had offered them. I recorded a defect that never existed and then reverted their decision | the owner said so |
 | 17 ▲ | §9: "`git config core.hooksPath .githooks` — activate the pre-commit gate" | there was no `.githooks` directory in this repository. The command set a config pointing at nothing, exited 0, and the gate had never run here — #2 with the hook files missing too | checking whether the gate was on, immediately before a commit that would have relied on it |
+| 20 ▲ | the ROM acceptance gates enforced Amendment 9's requirement that the population disagree | they did not. Gate 4 asked only whether two third parties reproduced *one of* the expected frames, which a unanimous population satisfies. ROMs D and E cleared all four while every interpreter produced the same frame. Now a condition, not a note: they are rejected | running the gate on D and E and reading the per-interpreter column |
 | 19 ▲ | `cwithmichael` fails **18** tests its peers pass (§4.5) | **17.** The shipped `eligibility()` returns 17, deterministically, in a clean clone and in the working tree alike. Every other figure in the table, and all twelve §4.6 figures, reproduce exactly | diffing every published number against a clean clone, on request |
 | 18 ▲ | `wyattferguson` has three defects: a wrap at 255, carry at ≥ 255, and VF write order | one. `MAX_8BIT` is **256**, not 255 — I never opened `constants.py`. At 256 the wrap and the carry threshold are both correct; only the write order is a defect. Five other traced causes re-checked and all hold | reading the constant while drafting a pull request against that line |
 

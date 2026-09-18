@@ -8,8 +8,15 @@ from vaudit.tasks.chip8.manifest import usable_population
 from vaudit.tasks.chip8.quirk_roms import (
     INDEX_ROM,
     INDEX_TARGET,
+    JUMP_ROM,
+    JUMP_TARGET,
     SHIFT_ROM,
     SHIFT_TARGET,
+    VFRESET_ROM,
+    VFRESET_TARGET,
+    WRAP_ROM,
+    WRAP_TARGET,
+    Acceptance,
     check,
 )
 
@@ -125,3 +132,62 @@ def test_a_sprite_row_must_stay_on_one_scanline():
     assert set(spilled) == {"robertolaru", "cwithmichael"}, (
         f"expected exactly these two to spill onto row 1, got {spilled}"
     )
+
+
+# --- incident #20: the gate that did not check what its prose said --------------------------------
+
+
+def test_gate_four_b_rejects_a_rom_the_whole_population_agrees_on():
+    """A non-splitting population must fail acceptance, with no population needed to prove it.
+
+    Amendment 9 required a split in prose; the gates only asked whether two third parties
+    reproduced *one of* the expected frames, which a unanimous population satisfies trivially.
+    ROMs D and E passed all four that way while testing nothing.
+    """
+    ref = bytes([0]) * (64 * 32)
+    divergent = bytearray(ref)
+    divergent[0] = 1
+    divergent = bytes(divergent)
+
+    unanimous = dict.fromkeys(("a", "b", "c", "d"), ref)
+    split = {"a": ref, "b": ref, "c": divergent, "d": divergent}
+
+    for frames, expect_split in ((unanimous, False), (split, True)):
+        got = Acceptance(
+            timer_free=True,
+            sensitive_to_target=True,
+            insensitive_to_others=(),
+            spurious=(),
+            settles_at=2,
+            third_party_reproduced=tuple(frames),
+            behaviours=len(set(frames.values())),
+        )
+        assert got.population_splits is expect_split
+        assert got.accepted is expect_split
+        # gate 4 passes either way — which is exactly why 4b had to be added
+        assert len(got.third_party_reproduced) >= 2
+
+
+@needs_population
+def test_roms_d_and_e_are_rejected_because_the_population_agrees():
+    """The real fixture for the above: two ROMs that cleared four gates and test nothing."""
+    for rom, target in ((JUMP_ROM, JUMP_TARGET), (VFRESET_ROM, VFRESET_TARGET)):
+        third = {e.key: build(e, path_for(e)).frames(rom, 30)[-1] for e in _fetched}
+        got = check(rom, third_party=third, frames=30, target=target)
+        assert got.timer_free and got.sensitive_to_target and not got.spurious
+        assert len(got.third_party_reproduced) >= 2, "gate 4 still passes"
+        assert got.behaviours == 1, "every interpreter produces the same frame"
+        assert not got.accepted, "so the ROM must not enter the study"
+
+
+@needs_population
+def test_roms_a_b_and_c_still_pass_the_corrected_gates():
+    for rom, target, expected_behaviours in (
+        (SHIFT_ROM, SHIFT_TARGET, 2),
+        (INDEX_ROM, INDEX_TARGET, 2),
+        (WRAP_ROM, WRAP_TARGET, 3),
+    ):
+        third = {e.key: build(e, path_for(e)).frames(rom, 30)[-1] for e in _fetched}
+        got = check(rom, third_party=third, frames=30, target=target)
+        assert got.behaviours == expected_behaviours, (target, got.behaviours)
+        assert got.accepted

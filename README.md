@@ -145,15 +145,15 @@ from the study that bounded the headline, which is why that study is the most us
 ## The incident record
 
 While building an instrument to catch measurements that are about the wrong thing, this project
-made that mistake **nineteen times** — seventeen of them introduced by the model doing the work.
+made that mistake **twenty times** — eighteen of them introduced by the model doing the work.
 Each has a traced cause, and none was caught by the thing it broke failing at the moment it broke.
 They fall into four patterns, each with a direct analogue in building RL graders: the check that
 wasn't running, the claim wider than the thing verified, scaffolding mistaken for the subject's
 behaviour, and the fixture that couldn't show what it was built to show.
 
 The most recent: ROMs D and E cleared all four acceptance gates while testing nothing about the
-population, because the gates required a split in prose and never checked for one. There is now a
-fifth gate, and both ROMs fail it.
+population, because the gates required a split in prose and never checked for one. That is now a
+condition of acceptance rather than a note beside it, and both ROMs are rejected by it.
 
 → [`WRITEUP.md` §2 and Appendix A](WRITEUP.md)
 

@@ -183,4 +183,14 @@ def test_acceptance_reports_whether_the_population_actually_split():
     split = Acceptance(True, True, (), (), 2, ("a", "b"), behaviours=2)
     assert not unanimous.population_splits
     assert split.population_splits
-    assert unanimous.accepted, "a unanimous ROM is still well-formed; gate 5 is reported, not fatal"
+    # Incident #20: this used to assert `unanimous.accepted`. A ROM the whole population agrees
+    # on cannot produce a data point, so it must not be accepted.
+    assert not unanimous.accepted, "a non-splitting ROM tests nothing and must be rejected"
+    assert split.accepted
+
+    # Gate 4 is necessary but not sufficient: a unanimous population satisfies it trivially,
+    # because every member reproduces one of the two expected frames — the same one.
+    assert len(unanimous.third_party_reproduced) >= 2, "gate 4 alone would have passed this"
+
+    # And acceptance is not decidable without running the population.
+    assert not Acceptance(True, True, (), (), 2, ("a", "b"), behaviours=0).accepted

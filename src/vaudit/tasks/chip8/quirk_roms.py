@@ -296,9 +296,15 @@ class Acceptance:
         """Did real interpreters disagree, or only my quirk-flipped harness?
 
         Amendment 9 required this in prose — "a ROM every interpreter agrees on tests nothing" —
-        and the four gates below never checked it, so ROM D and ROM E passed all four while the
-        population was unanimous. Recorded as gate 5 rather than folded into `accepted`, because
-        it is a fact about the population and not about whether the ROM is well-formed.
+        and the gates never checked it, so ROM D and ROM E passed all four while the population
+        was unanimous. It was first added as a *reported* gate 5 on the reasoning that a
+        non-splitting ROM is still well-formed; that was too lenient and is incident #20. A ROM
+        the population agrees on cannot produce a data point, so it does not enter the study, and
+        this is now a condition of `accepted` rather than a note beside it.
+
+        `check()` called with no `third_party` frames leaves `behaviours` at 0 and therefore
+        cannot accept anything — which is correct: acceptance is not decidable without running
+        the population.
         """
         return self.behaviours >= 2
 
@@ -309,7 +315,10 @@ class Acceptance:
             and self.sensitive_to_target
             and not self.spurious
             and self.settles_at is not None
+            # gate 4, unchanged: at least two third parties reproduce one of the expected frames
             and len(self.third_party_reproduced) >= 2
+            # gate 4b, added: and they must not all reproduce the SAME one
+            and self.population_splits
         )
 
     def render(self) -> str:
@@ -325,7 +334,7 @@ class Acceptance:
                 f"3. settles                  {mark(self.settles_at is not None, settled)}",
                 f"4. third-party reproduce    {mark(len(self.third_party_reproduced) >= 2)}"
                 f" {list(self.third_party_reproduced)}",
-                f"5. population splits        {mark(self.population_splits)}"
+                f"4b. population splits      {mark(self.population_splits)}"
                 f" {self.behaviours} distinct frame(s) among third parties",
                 "",
                 f"ACCEPTED: {self.accepted}",
