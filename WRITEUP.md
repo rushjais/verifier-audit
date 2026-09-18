@@ -34,7 +34,8 @@ are assembled by people who already know the answer.
 Four things make the record worth more than the results it accompanies:
 
 1. **Every incident has a traced cause**, not a symptom — a source line where there is one, and
-   for #2, #14, #16 and #17 a cause that is not a line at all. §2 and Appendix A give them.
+   for #2, #14, #16, #17, #19 and #20 a cause that is not a line at all. §2 and Appendix A
+   give them.
 2. **None was caught by the thing it broke failing at the moment it broke.** Three did surface as
    tracebacks or test failures, but from tests written days earlier for unrelated purposes.
 3. **Each pattern maps onto a way real graders fail.** Pattern A is the acceptance test that never
@@ -689,8 +690,8 @@ both hold, and both turned out stronger than the draft claimed.
 | 19 ▲ | `cwithmichael` fails **18** tests its peers pass (§4.5) | **17.** The shipped `eligibility()` returns 17, deterministically, in a clean clone and in the working tree alike. Every other figure in the table, and all twelve §4.6 figures, reproduce exactly | diffing every published number against a clean clone, on request |
 | 18 ▲ | `wyattferguson` has three defects: a wrap at 255, carry at ≥ 255, and VF write order | one. `MAX_8BIT` is **256**, not 255 — I never opened `constants.py`. At 256 the wrap and the carry threshold are both correct; only the write order is a defect. Five other traced causes re-checked and all hold | reading the constant while drafting a pull request against that line |
 
-#12, #13, #14 and #17 were found by running or checking §9's own commands, which is why that is
-now part of the procedure rather than an assumption. #13 is the sharpest of the set: a tool whose
+#12, #13, #14, #17 and #19 were found by running or checking §9's own commands, which is why
+that is now part of the procedure rather than an assumption. #13 is the sharpest of the set: a tool whose
 job is maintaining quality silently modified the evidence, in a document arguing that
 measurements are confidently about the wrong thing. Quoted source is now fenced as `text` so no formatter can
 touch it.
