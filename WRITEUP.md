@@ -492,7 +492,16 @@ replaced with cheats chosen after seeing the numbers.
 | 15 | SSIM does not degrade monotonically with displacement; 4px and 24px within 0.02 | **hit** — identical at 0.9375 for 4, 8, 16 and 24. Block count predicts the score; distance does not |
 | 16 | a third divergence *kind* with one-block geometry behaves like ROM B, not ROM A | **marginal hit** — separates like ROM B and scores above its blank screen, but 0.9688 sits nearly midway between the two, nearer B by 0.0255 vs 0.0313 |
 
-Seven evaluated, five hit, one marginal, one missed. **#13 was registered as one I expected to get wrong**, and
+| 17 | the boundary is `φ > 0.5`, independent of density | **miss** — the derivation dropped the collision term. Corrected in Amendment 10 to `φ(1−d) > ½` |
+| 18 | SSIM's φ-crossover is below pixel proportion's | **miss**, and the wrong question: φ is not SSIM's parameter at all |
+| 19 | at GBA scale, one displaced sprite, the blank frame loses under all three | **hit** — and the costliest hit here. SSIM 0.9870 vs 0.3033. §4.6's relevance to GBA Eval is materially reduced, as pre-committed |
+| 22 | the corrected curve predicts four held-back densities to ±0.04 | **miss**, narrowly — three inside ±0.01, the fourth off by 0.049. Errs low at high density, as registered |
+| 23 | block occupancy, not density, controls SSIM — and flips a verdict | **split** — mechanism confirmed hard (blank scores 0.9683 vs 0.0027 at identical density), no verdict flipped, so falsified as written |
+
+Twelve evaluated, six hit, one marginal, one split, four missed. The Amendment 8/10 study
+falsified four of its five predictions, including both registered out of sample, and is the most
+useful thing in this document for exactly that reason: it replaced a scope concession with a
+closed-form boundary, and it cost the headline its generality. **#13 was registered as one I expected to get wrong**, and
 it is the one that produced the sharper finding. **#14 was registered specifically so that a
 mechanism I had already published in §4.6 could be falsified** — it could have shown the
 explanation was wrong while the headline number stood. It did not, and the claim is narrower and

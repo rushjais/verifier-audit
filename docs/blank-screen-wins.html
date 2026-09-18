@@ -213,7 +213,7 @@
     Reference-based grading <span>/</span> CHIP-8 <span>/</span> 2026-09-17
   </p>
 
-  <h1>A correct emulator scored below a blank screen</h1>
+  <h1>A correct emulator scored below a blank screen — and here is exactly when</h1>
 
   <div class="col">
     <p class="lede">
@@ -224,6 +224,12 @@
       <span class="num">0.9375</span> and an emulator that draws <em>nothing at all</em> at
       <span class="num">0.9688</span>. Pixel proportion and GMSD rank them the same way.
       Every number here recomputes from the repository.
+    </p>
+    <p class="lede">
+      That failure has a boundary, and it is in closed form. It needs frames where nearly all the
+      drawn content moves <em>and</em> the display is sparse — and
+      <strong>a real GBA frame is in neither regime.</strong> The measurement that establishes
+      that is below, along with the prediction of mine it falsified.
     </p>
   </div>
 
@@ -474,6 +480,133 @@
     </p>
   </section>
 
+  <section>
+    <h2 class="col">Where the failure stops — the part I got wrong</h2>
+    <div class="col">
+      <p>
+        The obvious objection to everything above is that a 64×32 display with 14 lit pixels is
+        <span class="num">0.68%</span> lit, so a blank frame is already 99.3% pixel-correct before
+        any metric runs. Earlier drafts of this page named that objection and left it unanswered.
+        Answering it needs two parameters: the lit fraction <span class="num">d</span>, and
+        <span class="num">φ</span>, the fraction of drawn content the divergence <em>moves</em>.
+      </p>
+      <p>
+        I registered the boundary as <span class="num">φ&nbsp;&gt;&nbsp;0.5</span>, independent of
+        density, and called it arithmetic rather than a guess. <strong>It was wrong.</strong> It
+        dropped the collision term — displaced content does not always land on dark pixels, and
+        near half-lit most of it lands on pixels that were already on. Keeping the term:
+      </p>
+<pre>blank frame       differs in  d·N
+displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free landing sites
+
+<b>blank wins  ⟺  φ·(1−d) &gt; ½        ⟺   φ* = 1 / (2(1−d))</b></pre>
+      <p style="margin-top:var(--s3)">
+        Density does not cancel. The curve leaves the unit square at
+        <span class="num">d&nbsp;=&nbsp;0.5</span>: <strong>above half-lit, no amount of movement
+        lets a blank frame win.</strong> Both of my earlier claims are slices of this one surface,
+        and §4.6 sits in its far corner — <span class="num">d=0.0068</span>,
+        <span class="num">φ=1</span> — which is precisely where the dropped term is negligible and
+        the wrong derivation looked right.
+      </p>
+    </div>
+
+    <svg class="chart" viewBox="0 0 780 400" role="img"
+         aria-label="The boundary curve phi equals one over two times one minus d, rising from 0.5 at zero density to 1.0 at half density. Four out-of-sample measurements sit close to it. The region above the curve, where a blank frame outscores a correct implementation, shrinks to nothing at half density.">
+      <path d="M 90,273.3 L153,261.1 L216,247.4 L279,232.2 L342,215 L405,195.6 L468,173.3 L531,147.7 L594,118.1 L657,82.7 L720,40 L90,40 Z"
+            fill="var(--fail)" fill-opacity="0.13"/>
+      <g class="grid">
+        <line x1="90" y1="40"    x2="720" y2="40"/>
+        <line x1="90" y1="133.3" x2="720" y2="133.3"/>
+        <line x1="90" y1="226.7" x2="720" y2="226.7"/>
+      </g>
+      <text class="blank-t" x="410" y="76" text-anchor="middle">the blank cheat wins in here</text>
+      <polyline class="ser" points="90,273.3 153,261.1 216,247.4 279,232.2 342,215 405,195.6 468,173.3 531,147.7 594,118.1 657,82.7 720,40"/>
+      <g class="dot">
+        <circle cx="279" cy="236"   r="5"/>
+        <circle cx="468" cy="170.7" r="5"/>
+        <circle cx="531" cy="152"   r="5"/>
+        <circle cx="657" cy="105.3" r="5"/>
+      </g>
+      <line class="axis" x1="90" y1="320" x2="720" y2="320"/>
+      <line class="axis" x1="90" y1="40"  x2="90"  y2="320"/>
+      <g class="lbl" text-anchor="end">
+        <text x="80" y="44">1.00</text>
+        <text x="80" y="137.3">0.80</text>
+        <text x="80" y="230.7">0.60</text>
+        <text x="80" y="277.3">0.50</text>
+      </g>
+      <g class="lbl" text-anchor="middle">
+        <text x="90"  y="342">0</text>
+        <text x="216" y="342">0.10</text>
+        <text x="342" y="342">0.20</text>
+        <text x="468" y="342">0.30</text>
+        <text x="594" y="342">0.40</text>
+        <text x="720" y="342">0.50</text>
+      </g>
+      <text class="lbl-i" x="405" y="368" text-anchor="middle">d — fraction of the display lit</text>
+      <text class="lbl-i" x="405" y="390" text-anchor="middle">amber curve: derived boundary φ* = 1/(2(1−d)) · dots: measured, at densities held back from the derivation · y-axis: φ</text>
+    </svg>
+
+    <div class="scroll">
+      <table>
+        <caption>
+          The corrected curve reached me only after the first sweep, so it was a fit, not a
+          prediction. These four densities were then held back and predicted in advance, to ±0.04.
+        </caption>
+        <thead>
+          <tr><th scope="col">Density d</th><th scope="col">Predicted φ*</th><th scope="col">Measured</th><th scope="col">Error</th><th scope="col">Verdict</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>0.15</td><td>0.588</td><td>0.58</td><td>−0.008</td><td>hit</td></tr>
+          <tr><td>0.30</td><td>0.714</td><td>0.72</td><td>+0.006</td><td>hit</td></tr>
+          <tr><td>0.35</td><td>0.769</td><td>0.76</td><td>−0.009</td><td>hit</td></tr>
+          <tr><td>0.45</td><td>0.909</td><td>0.86</td><td class="bad">−0.049</td><td class="bad">miss</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="foot">
+      <strong>Three of four inside ±0.01, and the fourth outside the registered tolerance by
+      0.009 — so the prediction is recorded as falsified.</strong> It errs low at high density, in
+      the direction the registration said to check first: this generator moves a contiguous column
+      band, so arriving content collides only in a narrow leading strip rather than in proportion
+      to φ, and that gap widens with d. A flat φ=0.5 boundary is ruled out outright — at d=0.30 it
+      predicts 0.5 against 0.72 measured.
+    </p>
+  </section>
+
+  <section>
+    <h2 class="col">And SSIM does not follow that curve at all</h2>
+    <div class="col">
+      <p>
+        SSIM pools over blocks, so it never sees global density — it sees <strong>block
+        occupancy</strong>. Two frames with the same 1200 lit pixels, one packed into 19 blocks and
+        one scattered across 600, hold <em>d</em> exactly constant:
+      </p>
+    </div>
+    <div class="scroll">
+      <table>
+        <caption>Identical content, opposite layouts, scored against a blank frame.</caption>
+        <thead>
+          <tr><th scope="col">Layout</th><th scope="col">Lit pixels</th><th scope="col">Blocks occupied</th><th scope="col">Pixel proportion</th><th scope="col">SSIM</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Concentrated</td><td>1200</td><td>19</td><td>0.9688</td><td class="hi">0.9683</td></tr>
+          <tr><td>Spread</td><td>1200</td><td>600</td><td>0.9688</td><td>0.0027</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="foot">
+      Pixel proportion cannot tell them apart — identical to twelve decimal places. SSIM scores the
+      blank frame <strong>350× apart</strong> on the same content. So the second prediction I
+      registered here was also wrong, and wrong at the root: it compared SSIM's crossover
+      <em>in φ</em> against pixel proportion's, and φ is not SSIM's parameter. No verdict actually
+      flipped between the two layouts, so that prediction is falsified too, even though the
+      mechanism behind it came out this strongly. One degeneracy worth stating before a reviewer
+      finds it: a blank frame has zero variance, so SSIM's luminance and contrast terms are carried
+      by the stabilising constants C₁ and C₂ rather than by any similarity judgement.
+    </p>
+  </section>
+
   <section class="col">
     <h2>Checks I would want to see, if this were someone else's page</h2>
     <ul>
@@ -516,13 +649,27 @@
       input, with nothing in the score announcing which regime you are in.
     </p>
     <p>
-      <strong>Scope, and it matters:</strong> this runs on three authored ROMs, one quirk each, with
-      a 14-pixel glyph on a 64×32 monochrome display. GBA Eval's frames are 240×160 and in colour,
-      where the same displacement disturbs a very different fraction of the image.
-      <em>This is not a claim that their grader mis-ranks their submissions.</em> It is a
-      demonstration that the metric they settled on has a regime where it does, that the regime is
-      reachable by a legitimate quirk difference, and that whether their frames sit in it is
-      measurable and not measured here.
+      <strong>Scope, now measured rather than conceded — and it costs this page its headline.</strong>
+      I registered, before running it, that if a single displaced sprite on a realistic
+      240×160 frame lost to a blank frame under none of the three metrics, then
+      <em>§4.6's practical relevance to GBA Eval is materially reduced</em> and this page would
+      have to say so in those words. That is what happened. At
+      <span class="num">d=0.25</span> with one sprite-sized region displaced, SSIM scores the
+      correct divergence <span class="num">0.9870</span> against the blank frame's
+      <span class="num">0.3033</span>; at <span class="num">d=0.50</span> the gap is
+      <span class="num">0.9809</span> against <span class="num">0.0550</span>. Pixel proportion and
+      GMSD agree. <strong>The failure demonstrated here is a property of sparse displays where
+      nearly all the drawn content moves. It is not their grader's operating regime, and this is
+      not a claim that their grader mis-ranks their submissions.</strong>
+    </p>
+    <p>
+      What survives is narrower and, I think, more useful than the headline was: the regime is real,
+      it is reachable by a legitimate platform disagreement rather than an adversarial input, and
+      <strong>it now has a closed-form boundary you can check your own frames against</strong> —
+      measure what fraction of drawn content your divergence moves, measure how much of the display
+      is lit, and see which side of <span class="num">φ(1−d) = ½</span> you are on. For SSIM,
+      measure block occupancy instead. That is a test someone can run on their own grader in an
+      afternoon, which the original finding was not.
     </p>
   </section>
 
