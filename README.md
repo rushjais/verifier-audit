@@ -115,10 +115,10 @@ over.
 ```bash
 uv sync
 python -m vaudit.tasks.chip8.fetch    # population + ROMs at pinned commits
-make check                            # 188 tests, offline, no API key
+make check                            # 191 tests, offline, no API key
 ```
 
-Run `make check` *before* fetching and you get 139 passed, 19 skipped — the adapter tests skip
+Run `make check` *before* fetching and you get 140 passed, 21 skipped — the adapter tests skip
 cleanly when the population is absent, so the suite can never go green while silently claiming a
 study that did not run.
 

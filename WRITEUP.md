@@ -604,15 +604,15 @@ same party that would write the metrics.
 ```bash
 uv sync
 python -m vaudit.tasks.chip8.fetch    # population + ROMs at pinned commits (network, no API key)
-make check                            # 188 tests, offline, no API key
+make check                            # 191 tests, offline, no API key
 python -m vaudit.audit.sweep --tasks 5  # prices the run; buys nothing without --confirm
 git config core.hooksPath .githooks   # activate the pre-commit gate (incidents #2, #17)
 ```
 
 **Order matters, and an earlier draft had it wrong.** Run `make check` before fetching and you get
-**139 passed, 19 skipped** — the adapter tests skip cleanly when the population is absent, by
+**140 passed, 21 skipped** — the adapter tests skip cleanly when the population is absent, by
 design, so the suite can never go green while silently claiming a study that did not run. Only
-after fetching is it **188**. The draft listed the steps the other way round and claimed the
+after fetching is it **191**. The draft listed the steps the other way round and claimed the
 fetched count for the unfetched one; that is incident #14, and the counts here were re-measured
 in both orders on 2026-09-17 rather than carried forward.
 
@@ -622,9 +622,9 @@ tree, and running §9's four steps in order on a machine with no `.population` a
 | step | result |
 | --- | --- |
 | `uv sync` | exit 0 |
-| `make check` *before* fetching | **139 passed, 19 skipped** — as documented |
+| `make check` *before* fetching | **140 passed, 21 skipped** — as documented |
 | `python -m vaudit.tasks.chip8.fetch` | exit 0, 7 interpreters + ROMs at their pinned commits |
-| `make check` *after* fetching | **188 passed** — as documented |
+| `make check` *after* fetching | **191 passed** — as documented |
 
 Then every published figure was diffed against what the clean clone produced. All twelve §4.6
 figures matched exactly, as did six of the seven rows in §4.5 — the seventh is incident #19, and
