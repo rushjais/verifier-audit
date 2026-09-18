@@ -145,7 +145,7 @@ from the study that bounded the headline, which is why that study is the most us
 ## The incident record
 
 While building an instrument to catch measurements that are about the wrong thing, this project
-made that mistake **seventeen times** — fifteen of them introduced by the model doing the work.
+made that mistake **eighteen times** — sixteen of them introduced by the model doing the work.
 Each has a traced cause, and none was caught by the thing it broke failing at the moment it broke.
 They fall into four patterns, each with a direct analogue in building RL graders: the check that
 wasn't running, the claim wider than the thing verified, scaffolding mistaken for the subject's

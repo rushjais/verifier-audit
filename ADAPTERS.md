@@ -97,10 +97,19 @@ def _store_vx_result(self, value: int) -> None:
     self.v[self.x] = value % MAX_8BIT
 ```
 
-Three defects in four lines. `MAX_8BIT` is 255, so `% MAX_8BIT` wraps at 255 rather than 256 and
-a legitimate result of 255 becomes 0. `add_vx_vy` passes `total - MAX_8BIT`, so carry is flagged
-when the total is ≥ 255 rather than > 255. And VF is written *before* VX, so when `x == 0xF` the
-store clobbers the flag — exactly the "can vF be used as the vX input" case the flags test checks.
+**One defect, not three — corrected 2026-09-18.** An earlier version of this entry claimed three:
+that `% MAX_8BIT` wrapped at 255, and that carry was flagged at `>= 255`. Both were wrong, and
+wrong for the same reason: I read `MAX_8BIT` as 255 without opening `constants.py`, where it is
+**256**. With 256 the wrap is correct, and `add_vx_vy` passing `total - 256` makes
+`value >= 0` exactly `total >= 256`, which is also correct. Verified by probe:
+ADD 200+100 gives V1=44 VF=1, ADD 100+50 gives V1=150 VF=0, SUB 5-10 gives V1=251 VF=0,
+SUB 10-5 gives V1=5 VF=1 — all correct.
+
+The real defect is the **write order**. `VF` is assigned before `V[x]`, so when `x == 0xF` the
+second line overwrites the flag with the arithmetic result. Probe: ADD with `x = 0xF`,
+`VF = 200`, `V2 = 100` leaves **VF = 44** where the carry 1 belongs. That is exactly the "can vF
+be used as the vX operand" case the Timendus flags test checks, and `shr_vx` / `shl_vx` share the
+same ordering.
 
 ### robertolaru — `cpu.py:256-261`
 
