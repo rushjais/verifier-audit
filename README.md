@@ -19,7 +19,7 @@ and the grader ranks that legitimate difference *below* a submission that render
 implementation below one that does nothing doesn't waste that rollout's compute — it spends it
 teaching the model that correct behaviour is wrong.
 
-📄 **[Read the write-up](https://rushjais.github.io/verifier-audit/blank-screen-wins.html)** · 🔬 [Method and full results](WRITEUP.md) ·
+📄 **[Read the write-up](https://rushiljaiswal.com/graders)** · 🔬 [Method and full results](WRITEUP.md) ·
 📋 [Pre-registration](PREDICTIONS.md) · 📚 [What was already known](LITERATURE.md)
 
 ---
