@@ -1,13 +1,13 @@
-# Eighteen measurements that were about the wrong thing
+# Nineteen measurements that were about the wrong thing
 
 **Last updated 2026-09-17.** Numbers reproduce from this repository; commands in §9.
 
 > **TL;DR.** I set out to build an instrument that detects when a grader is unfair rather than
 > merely gameable. The instrument works, and everything it measured turned out to be a replication
 > of established results — the literature search in `LITERATURE.md` is unsparing about that. What
-> the project produced that is not a replication is **a first-person record of eighteen
+> the project produced that is not a replication is **a first-person record of nineteen
 > occasions, inside one small project, where a measurement was confidently about something other
-> than what it claimed**. Sixteen were introduced by the model doing the work. None was caught by
+> than what it claimed**. Seventeen were introduced by the model doing the work. None was caught by
 > the thing it broke failing at the moment it broke. They fall into four patterns, and each
 > pattern has a direct analogue in building RL graders — which is the argument this document is
 > actually making.
@@ -24,7 +24,7 @@ each defect.
 
 The project was an instrument for catching graders that are confidently wrong — that reject
 correct work, disagree with themselves, or test what the prompt never made knowable. While
-building it, the project committed that error eighteen times.
+building it, the project committed that error nineteen times.
 
 That is not irony for its own sake. The failures were **recorded as they happened, with their
 causes traced, by someone who was specifically looking for that class of failure and still missed
@@ -43,24 +43,24 @@ Four things make the record worth more than the results it accompanies:
    the wrong population.
 4. **The project's own checks caught a minority of them.** Appendix A's surfacing column: tests
    and tracebacks **3** (#4, #5, #8), running or verifying a documented command **4** (#3, #12,
-   #14, #17), reading code or output **9**, the repository's owner **1**, an unexpected state
-   **1**. Reading beat testing better than two to one — though half of that reading was of *code*,
+   #14, #17, #19), reading code or output **9**, the repository's owner **1**, an unexpected
+   state **1**. Reading beat testing better than two to one — though half of that reading was of *code*,
    not output.
 
 The results that produced these incidents are in §4, labelled as the replications they are.
 
 ---
 
-## 2. The eighteen
+## 2. The nineteen
 
-Assembled while building an instrument for the same class of failure in graders. **Sixteen were
+Assembled while building an instrument for the same class of failure in graders. **Seventeen were
 introduced by the model during this work**; #1 was in the original hackathon code, which three of
 us wrote; #2 is a property of git that nobody introduced and nobody noticed. The full list with
 causes is Appendix A.
 
 ### A. The check was not running (#2, #3, #4, #8, #12, #17), and one that was never broken (#16)
 
-The most common of the four — seven of eighteen — and an inert check is indistinguishable from
+The most common of the four — seven of nineteen — and an inert check is indistinguishable from
 a passing one. `core.hooksPath` is local git config, so a clone has the hook files and no hook;
 and in this repository there were no hook files either, so the command §9 gave for activating the
 gate pointed at a directory that did not exist, set the config anyway, and exited 0.
@@ -80,7 +80,11 @@ by whoever noticed it.
 **What distinguishes these: the system was quieter than before, not louder.** Nothing errored.
 A sealed exploit, a green gate and a passing suite all look like progress.
 
-### B. The claim was wider than the thing verified (#1, #11, #14, #15, #18)
+### B. The claim was wider than the thing verified (#1, #11, #14, #15, #18, #19)
+
+A published figure said `cwithmichael` fails 18 tests its peers pass; the shipped code says 17.
+Found by running the study from a clean clone and diffing every published number against what came
+back — the one check nobody had done was the one that catches this.
 
 A traced cause published against a third party's code named three defects where the code has one:
 I read `MAX_8BIT` as 255 without opening `constants.py`, where it is 256, and two of the three
@@ -127,7 +131,7 @@ That correction is itself another instance — unnumbered, because it is a claim
 rather than an entry in it — and the reason the section is here.
 
 #12, #13, #14 and #15 were all found in one sitting, by running the documented commands from a
-clean clone and by checking what the shipped code measures before running it. Four of eighteen
+clean clone and by checking what the shipped code measures before running it. Four of nineteen
 came from an hour of not trusting the documentation — the highest-yield hour in the project. #17
 arrived the same way and later: checking whether the gate was on, immediately before a commit
 that would have relied on it.
@@ -276,7 +280,7 @@ gold scores 1 under the fix. A sandbox that failed to start would fail all three
 | robertolaru | 12 | `cpu.py:256-261` — `res` masked to 8 bits then tested `> 0xff`; dead branch |
 | rudzen | 14 | `cpu.py:128,134` — borrow uses `>` where it needs `>=` |
 | islay | 18 | `src/chip8.py:99-129` — VF written before operands are read; `SHL` unmasked |
-| cwithmichael | 18 | `cpu.py:172-176` — VF assigned before the sum is stored |
+| cwithmichael | 17 | `cpu.py:172-176` — VF assigned before the sum is stored |
 | debugloop | 18 | `emu.py:112-114` — `& 0xf0000` on a 9-bit sum is always 0; result masked `& 0xffff`, so no 8-bit wrap |
 
 **What the column counts.** Tests an interpreter fails *that another interpreter passes*
@@ -608,6 +612,20 @@ after fetching is it **188**. The draft listed the steps the other way round and
 fetched count for the unfetched one; that is incident #14, and the counts here were re-measured
 in both orders on 2026-09-17 rather than carried forward.
 
+**Re-verified from a clean clone on 2026-09-18**, cloning from GitHub rather than copying this
+tree, and running §9's four steps in order on a machine with no `.population` and no `.venv`:
+
+| step | result |
+| --- | --- |
+| `uv sync` | exit 0 |
+| `make check` *before* fetching | **139 passed, 19 skipped** — as documented |
+| `python -m vaudit.tasks.chip8.fetch` | exit 0, 7 interpreters + ROMs at their pinned commits |
+| `make check` *after* fetching | **188 passed** — as documented |
+
+Then every published figure was diffed against what the clean clone produced. All twelve §4.6
+figures matched exactly, as did six of the seven rows in §4.5 — the seventh is incident #19, and
+this is how it was found. §4.1 reproduces offline from `data/solutions/` with no API calls.
+
 **Verified from a clean clone on 2026-09-16**, which is how #12 and #13 were found: `make check`
 was failing on the format step while `ruff check` alone reported success. Steps 1, 2 and 3 now
 pass from a fresh clone with no API key and no pre-existing `.population`. Step 4 was run as a
@@ -663,6 +681,7 @@ both hold, and both turned out stronger than the draft claimed.
 | 15 ▲ | "the sweep command reproduces §4.1 and §4.2 here" | true of §4.1, false of §4.2 — the clean-room rewrite dropped the hardening track, so this repo cannot produce that number at all | checking what the shipped sweep actually measures before running it |
 | 16 ▲ | "the repository flipped to public on its own — an incident" | it did not. The owner made it public, deliberately, using an option I had offered them. I recorded a defect that never existed and then reverted their decision | the owner said so |
 | 17 ▲ | §9: "`git config core.hooksPath .githooks` — activate the pre-commit gate" | there was no `.githooks` directory in this repository. The command set a config pointing at nothing, exited 0, and the gate had never run here — #2 with the hook files missing too | checking whether the gate was on, immediately before a commit that would have relied on it |
+| 19 ▲ | `cwithmichael` fails **18** tests its peers pass (§4.5) | **17.** The shipped `eligibility()` returns 17, deterministically, in a clean clone and in the working tree alike. Every other figure in the table, and all twelve §4.6 figures, reproduce exactly | diffing every published number against a clean clone, on request |
 | 18 ▲ | `wyattferguson` has three defects: a wrap at 255, carry at ≥ 255, and VF write order | one. `MAX_8BIT` is **256**, not 255 — I never opened `constants.py`. At 256 the wrap and the carry threshold are both correct; only the write order is a defect. Five other traced causes re-checked and all hold | reading the constant while drafting a pull request against that line |
 
 #12, #13, #14 and #17 were found by running or checking §9's own commands, which is why that is
