@@ -491,3 +491,198 @@ whole difference falls in the block covering x=0–7.
 ROM C must pass the same four Amendment 3 gates before any strategy runs on it, and the
 population must genuinely split on `sprites_wrap` — a ROM on which every interpreter agrees tests
 nothing.
+
+---
+
+# AMENDMENT 8 — the regime boundary §4.6 left unmeasured (2026-09-17)
+
+Written before any of the code below exists.
+
+§4.6 ends with a scope paragraph that names the objection and does not answer it: GBA Eval's
+frames are 240×160 and in colour, where a displacement disturbs a different fraction of the image
+than a 14-pixel glyph does on 64×32. A reader is entitled to ask whether the whole effect is an
+artefact of a nearly-empty display — the blank screen is already 99.3% pixel-correct before any
+metric runs. This amendment answers it.
+
+**This is a synthetic geometric study, not a quirk study.** There is no interpreter and no ROM in
+it. Its only purpose is to locate the boundary of the regime §4.6 demonstrates, so that someone
+grading their own frames can tell whether they are inside it. It is labelled as synthetic
+throughout and does not touch the CHIP-8 population.
+
+**The parameter that matters is not density.** Working it analytically: let the reference frame
+have `N` pixels of which a fraction `d` are lit, and let a divergence displace a fraction `φ` of
+that lit content far enough not to overlap itself.
+
+    blank frame       differs in  d·N        pixels — every lit pixel
+    displaced frame   differs in  2·φ·d·N    pixels — φ·d·N vanish, φ·d·N appear
+
+    blank scores higher under pixel proportion  ⟺  d·N < 2·φ·d·N  ⟺  φ > 0.5
+
+So density cancels. **The governing variable is the fraction of drawn content the divergence
+moves**, and §4.6 is the φ=1 corner: the glyph *is* the content, so all of it moved. This predicts
+that a quirk which shifts one sprite of a busy frame has small φ and will not reproduce §4.6,
+while a quirk which shifts a whole background has φ≈1 and will, at any density.
+
+> **Prediction 17.** Pixel proportion's crossover is at **φ ≈ 0.5** and is **independent of
+> density**. Sweeping φ at fixed d, the blank frame outscores the displaced frame for φ > 0.5 and
+> loses for φ < 0.5.
+>
+> **Falsified if** the empirical crossover lies outside φ ∈ [0.40, 0.60], or if it moves by more
+> than 0.10 across d ∈ [0.05, 0.50].
+>
+> **Confidence:** high. This is arithmetic, not an empirical guess; it is registered so that the
+> implementation can be caught disagreeing with the derivation.
+
+> **Prediction 18.** SSIM's crossover is at a **lower φ** than pixel proportion's. §4.6's
+> mechanism is that block pooling penalises relocation more harshly than pixel counting does
+> — two disturbed blocks against one — so SSIM should keep preferring the blank frame even when
+> less than half the content moves.
+>
+> **Falsified if** SSIM's φ-crossover is at or above pixel proportion's, or if SSIM shows no
+> crossover at all across φ ∈ [0.05, 1.0]. Either would mean §4.6's mechanism does not generalise
+> beyond the sparse single-glyph case, and §4.6 would have to be rewritten as a property of that
+> case rather than of block pooling.
+>
+> **Confidence:** medium. The competing effect is that a blank frame has zero variance, which
+> collapses SSIM's luminance *and* contrast terms in every non-empty block — and that penalty
+> grows with density, working against the blank frame in exactly the dense regime.
+
+> **Prediction 19.** At **GBA scale and realistic density** — 240×160, d ≥ 0.25, a single
+> displaced sprite-sized region, so φ small — **the blank frame loses under pixel proportion,
+> SSIM and GMSD alike.**
+>
+> **If this holds, §4.6's practical relevance to GBA Eval is materially reduced, and the write-up
+> and the public page must say so in those words.** The finding would then be a statement about
+> whole-content displacement on sparse displays, not about their grader's operating regime. That
+> consequence is registered here, before the run, so that it cannot be renegotiated afterwards.
+>
+> **Confidence:** high that the blank frame loses; the registered risk is to the *framing*, not to
+> the arithmetic.
+
+**Required of the implementation.** The five strategies in `strategies.py` are hardcoded to 64×32.
+The dimension-general versions this study needs are new code, and new code is a new place for a
+defect — incident pattern C. So they ship with an **equivalence test**: on the real ROM A, B and C
+frames the array versions must agree with `strategies.py` to within 1e-12, or the study does not
+run. Frames are generated from a fixed seed and the generator is committed.
+
+---
+
+# AMENDMENT 9 — the two remaining quirks (2026-09-17)
+
+Written before ROM D and ROM E exist.
+
+`Quirks` has five fields. Three have ROMs: `shift_uses_vy` (A), `memory_increments_i` (B),
+`sprites_wrap` (C). Two do not, and both are registered here so the coverage gap §7 names is
+closed rather than described:
+
+**ROM D — `jump.ch8`, the `BNNN` quirk.** The COSMAC VIP reads `BNNN` as "jump to NNN + V0";
+CHIP-48 reads it as "jump to NNN + VX", where X is the high nibble of NNN. Set `V0` and `V3` to
+different values and jump via `B3NN`: the two conventions land on different instructions, each
+drawing the glyph at a different x. That is a **second instance of relocation** — the kind ROM A
+covers — and it is registered precisely because §7 admits to one quirk per kind.
+
+> **Prediction 20.** ROM D behaves like ROM A, not like B or C: with the glyph displaced far
+> enough to touch two blocks, **no strategy separates**, and SSIM scores the correct divergent
+> frame below the blank screen. Relocation is a property of the *geometry*, so a different quirk
+> producing the same geometry must produce the same failure.
+>
+> **Falsified if** any strategy separates on ROM D, or SSIM scores its divergence above the blank
+> screen. That would mean ROM A's result depends on the shift quirk specifically rather than on
+> relocation, and the mechanism is wrong.
+>
+> **Confidence:** high. This is the prediction most likely to be called trivial, and it is worth
+> registering anyway: if it fails, §4.6's central claim fails with it.
+
+**ROM E — `vfreset.ch8`, the `8XY1/2/3` VF-reset quirk.** The VIP clears `VF` as a side effect of
+the logical ops; CHIP-48 leaves it alone. `VF` is a register, not a pixel, so the ROM must make it
+visible: set `VF` non-zero, run `8XY1`, then use `VF` as the *digit index* for the glyph. The two
+conventions therefore draw **different digits in the same place** — the same geometry as ROM B.
+
+> **Prediction 21.** ROM E behaves like ROM B: **pixel proportion and SSIM separate**, and SSIM
+> scores the divergence above the blank screen. A second instance of substitution should replicate
+> substitution's outcome.
+>
+> **Falsified if** ROM E fails to separate under both, which would mean ROM B's result depends on
+> the index quirk rather than on the geometry.
+>
+> **Confidence:** medium-high. The risk is digit choice: two digits sharing most of their lit
+> pixels give a much smaller divergence than ROM B's `3` vs `0`, so the acceptance gates must
+> record which digits the two conventions actually reach rather than assuming.
+
+Both ROMs must pass the same four Amendment 3 gates before any strategy runs, and on both the
+population must genuinely split — a ROM every interpreter agrees on tests nothing and is reported
+as inert, not tuned until it splits.
+
+---
+
+# AMENDMENT 10 — the corrected boundary, and an out-of-sample test of it (2026-09-17)
+
+**Amendment 8's derivation was wrong, and this records the correction before any new run.**
+
+Prediction 17 claimed the boundary was `φ > 0.5`, "independent of density", with the note that
+this was "arithmetic, not an empirical guess" and confidence **high**. It was not arithmetic. It
+dropped the collision term: content that moves does not always land on dark pixels, and at high
+density most of it lands on pixels that were already lit, so the divergence produces *fewer*
+differing pixels than `2φdN`. Keeping the term:
+
+    reference lit set        |R| = d·N
+    vacated, not re-lit      φ·d·N·(1−d)
+    arrived on dark pixels   φ·d·N·(1−d)
+    displacement error       ≈ 2·φ·d·N·(1−d)
+    blank error              d·N
+
+    blank wins  ⟺  d·N < 2·φ·d·N·(1−d)  ⟺  **φ·(1−d) > ½**
+
+Density does not cancel. It only appeared to because the term is negligible at §4.6's
+`d = 14/2048 = 0.0068` and dominant anywhere near half-lit. Both earlier claims are slices of this
+one surface: at `φ=1` it gives `d < 0.5`, and as `d → 0` it gives `φ > 0.5`. The boundary curve is
+
+    φ* = 1 / (2·(1−d))        leaving the unit square at d = 0.5
+
+**Prediction 17 is falsified as registered** — §4.7 records it that way, and the error is logged
+as an incident, because a derivation registered as certain and reported at high confidence was
+wrong in a way review caught and I did not.
+
+**The curve fits the Amendment 8 grid at all eight cells** within its 0.10 resolution, and the
+flat `φ=0.5` version is ruled out at `d=0.25`, where 0.70 was observed and 0.50 predicted. That is
+a **post-hoc fit**: the correction arrived after those numbers existed. It gets no predictive
+credit here, and the point of this amendment is to give it a chance to earn some.
+
+> **Prediction 22 — out of sample.** At densities not yet run, `d ∈ {0.15, 0.30, 0.35, 0.45}`,
+> swept on a 0.02 grid in φ, pixel proportion's crossover lands within **±0.04** of `1/(2(1−d))`:
+>
+>     d = 0.15 → 0.588      d = 0.30 → 0.714
+>     d = 0.35 → 0.769      d = 0.45 → 0.909
+>
+> **Falsified if** any of the four misses by more than 0.04, or if the observed crossovers are
+> better described by a constant than by the curve.
+>
+> **Confidence:** medium-high, and deliberately lower than Amendment 8's. The known deviation is
+> that this generator moves a *contiguous column band*, so arriving content mostly lands on the
+> band's own vacated territory and collides only in a narrow leading strip — collisions there are
+> roughly independent of φ rather than proportional to it, which the random-landing model assumes.
+> If the curve still tracks, it tracks despite that; if it fails, this is the reason to check first.
+
+**The SSIM boundary is a different quantity and must not inherit this curve.** SSIM pools over
+blocks, so it never sees global density — it sees *block occupancy*. A blank frame disturbs every
+block holding content, call it `B`; a displacement disturbs `B_vacated + B_arrived`, which at
+`φ=1` with no block-level overlap is `2B`. That is exactly why §4.6's displacement sweep is flat:
+4 pixels and 24 pixels both score 0.9375 because both land outside the source block.
+
+> **Prediction 23.** SSIM's behaviour is controlled by **block occupancy, not global density**. Two
+> frames with the *same* lit-pixel count — one concentrated in few blocks, one spread over many —
+> will give pixel proportion the **same** blank-wins verdict and SSIM **different** ones, with the
+> concentrated frame the one where the blank cheat wins.
+>
+> **Falsified if** SSIM's verdicts agree across the two layouts, or if pixel proportion's disagree.
+>
+> **Confidence:** medium. This is the sharper SSIM test and it replaces Prediction 18, which was
+> falsified for asking the wrong question: it compared SSIM's crossover *in φ* against pixel
+> proportion's, when φ is not SSIM's controlling parameter at all.
+
+**One degeneracy to state rather than let a reviewer find.** A blank frame has zero variance, so
+in every block SSIM's luminance and contrast terms are dominated by the stabilising constants
+`C₁ = 0.0001` and `C₂ = 0.0009` rather than by any similarity judgement. The blank cheat's SSIM is
+therefore partly an artefact of those constants. This does not affect whether a grader would
+accept it — a number is a number, and that is the point — but any claim about *why* it scores what
+it does has to say so.
