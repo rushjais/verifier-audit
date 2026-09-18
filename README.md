@@ -110,7 +110,7 @@ over.
 | **The population** | 7 third-party CHIP-8 interpreters, adapted to a headless harness, every modification typed and tested in [`ADAPTERS.md`](ADAPTERS.md) |
 | **The ROMs** | 5 authored, 12–34 bytes each, source published beside the bytes, 5 acceptance gates |
 | **Correctness** | adjudicated by the test ROM's own pass/fail marks read positionally — not by agreement with my implementation |
-| **Upstream** | 6 bug reports filed against the interpreters, each traced to a line in their own source |
+| **Upstream** | 6 bug reports filed across 4 repos, each traced to a line in their own source, all still open. 2 further defects are **unreported** — `wyattferguson` and `debugloop` both have issues disabled |
 
 ```bash
 uv sync

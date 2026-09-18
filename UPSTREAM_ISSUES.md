@@ -22,6 +22,24 @@ share nothing:
 `wyattferguson/chip8-emulator` and `debugloop/chip8` have issues disabled and could not be
 filed. Their defects are recorded in `ADAPTERS.md` and remain unreported upstream.
 
+## Status, re-checked 2026-09-18
+
+All six filed issues are **open**, none has a maintainer reply yet:
+
+| issue | title | state |
+| --- | --- | --- |
+| [robertolaru#1](https://github.com/robertolaru/chip8py/issues/1) | `8XY4` never sets the carry flag | open |
+| [rudzen#2](https://github.com/rudzen/Chip8Py/issues/2) | `8XY5`/`8XY7` set borrow wrongly when operands are equal | open |
+| [islay#1](https://github.com/IslayLaphroaig/CHIP-8/issues/1) | Arithmetic opcodes write `VF` before reading operands | open |
+| [cwithmichael#2](https://github.com/cwithmichael/chip8_py/issues/2) | `8XY4` writes `VF` before the result | open |
+| [robertolaru#2](https://github.com/robertolaru/chip8py/issues/2) | Sprite rows spill onto the next scanline | open |
+| [cwithmichael#3](https://github.com/cwithmichael/chip8_py/issues/3) | Sprite rows spill onto the next scanline | open |
+
+**Two defects remain unreported**, and both repos still have issues disabled as of this check:
+`wyattferguson/chip8-emulator` (last push 2026-08-01, so actively maintained — a pull request is
+the only channel) and `debugloop/chip8` (last push 2022-04-25, dormant). Six filed is not six of
+six; it is six across the four repos that would accept them.
+
 ## Eligibility, checked 2026-09-17
 
 | repo | archived | issues enabled | existing issue for this | eligible |
