@@ -35,7 +35,7 @@ All six filed issues are **open**, none has a maintainer reply yet:
 | [robertolaru#2](https://github.com/robertolaru/chip8py/issues/2) | Sprite rows spill onto the next scanline | open |
 | [cwithmichael#3](https://github.com/cwithmichael/chip8_py/issues/3) | Sprite rows spill onto the next scanline | open |
 
-**Two defects remain unreported**, and both repos still have issues disabled as of this check:
+**One defect remains unreported.** The `wyattferguson` defect is now filed as a pull request rather than an issue — https://github.com/wyattferguson/chip8-emulator/pull/9 — since that repo accepts no issues; see `UPSTREAM_PR.md`. Originally two remained unreported, and both repos still have issues disabled as of this check:
 `wyattferguson/chip8-emulator` (last push 2026-08-01, so actively maintained — a pull request is
 the only channel) and `debugloop/chip8` (last push 2022-04-25, dormant). Six filed is not six of
 six; it is six across the four repos that would accept them.

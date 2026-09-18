@@ -1,10 +1,18 @@
 # Draft pull request — `wyattferguson/chip8-emulator`
 
-**Not submitted.** Drafted 2026-09-18 for review. This repo has issues disabled, so a pull
-request is the only channel; the repo is actively maintained (last push 2026-08-01).
+**FILED 2026-09-18 — https://github.com/wyattferguson/chip8-emulator/pull/9** (open, mergeable, +6/−3 in one file).
 
-The fix and its measurement were produced by patching a *copy* of the repository at its pinned
-commit and re-running `Timendus/chip8-test-suite`. Nothing was pushed anywhere.
+This repo has issues disabled, so a pull request was the only channel; it is actively maintained
+(last push 2026-08-01). Before filing, the defect was confirmed present at their **current HEAD**
+(`d62e55d`), not only at the commit this project pinned, and the fix was re-verified against that
+HEAD: `wyattferguson` goes from 8 failures-against-peers to 0 on `4-flags.ch8`, 47 of 47 marks,
+and no other interpreter's score moves.
+
+Two of the draft's three open questions were carried into the PR body rather than decided
+unilaterally — the `bool`-vs-`int` store was left alone as out of scope for an ordering fix, and
+no test was included since the repo has no suite, both offered to the author. The third, whether
+to send PRs to the four repos with open unanswered issues, is still undecided and is the user's
+call.
 
 ---
 
