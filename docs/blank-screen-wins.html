@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="A correct CHIP-8 interpreter scores below a blank screen under SSIM, pixel proportion and GMSD — with the closed-form boundary of when that happens, and the predictions it falsified.">
+<meta name="description" content="A correct CHIP-8 interpreter scores below a blank screen under SSIM, pixel proportion and GMSD, with the closed-form boundary of when that happens and the predictions it falsified.">
 <link rel="canonical" href="https://rushiljaiswal.com/graders">
 <meta property="og:type" content="article">
-<meta property="og:title" content="A correct emulator scored below a blank screen">
-<meta property="og:description" content="A correct CHIP-8 interpreter scores below a blank screen under SSIM, pixel proportion and GMSD — with the closed-form boundary of when that happens, and the predictions it falsified.">
+<meta property="og:title" content="A correct emulator scored below a blank screen. Here is exactly when.">
+<meta property="og:description" content="A correct CHIP-8 interpreter scores below a blank screen under SSIM, pixel proportion and GMSD, with the closed-form boundary of when that happens and the predictions it falsified.">
 <meta property="og:url" content="https://rushiljaiswal.com/graders">
 <meta property="og:image" content="https://rushiljaiswal.com/assets/og/vaudit.png">
 <meta property="og:image:width" content="1200">
@@ -15,15 +15,15 @@
 <meta property="og:image:alt" content="Three CHIP-8 screens: a reference frame scoring SSIM 1.0000, a correct interpreter scoring 0.9375, and a blank screen scoring 0.9688.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://rushiljaiswal.com/assets/og/vaudit.png">
-<meta name="twitter:title" content="A correct emulator scored below a blank screen">
-<meta name="twitter:description" content="A correct CHIP-8 interpreter scores below a blank screen under SSIM, pixel proportion and GMSD — with the closed-form boundary of when that happens, and the predictions it falsified.">
-<title>Blank Screen Wins</title>
+<meta name="twitter:title" content="A correct emulator scored below a blank screen. Here is exactly when.">
+<meta name="twitter:description" content="A correct CHIP-8 interpreter scores below a blank screen under SSIM, pixel proportion and GMSD, with the closed-form boundary of when that happens and the predictions it falsified.">
+<title>A correct emulator scored below a blank screen. Here is exactly when.</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
 <style>
   /* Dark-first: the bare :root carries the primary (dark) palette; light is
      redefined below, guarded so an explicit choice wins in both directions.
-     The depicted screens stay dark in both themes — they are hardware. */
+     The depicted screens stay dark in both themes. They are hardware. */
   :root {
     --ground:    #12151c;
     --panel:     #1a1f2a;
@@ -239,12 +239,12 @@
     Reference-based grading <span>/</span> CHIP-8 <span>/</span> 2026-09-17
   </p>
 
-  <h1>A correct emulator scored below a blank screen — and here is exactly when</h1>
+  <h1>A correct emulator scored below a blank screen. Here is exactly when.</h1>
 
   <div class="col">
     <p class="lede">
       Grade an emulator by comparing its frame to a reference implementation's and you need a
-      similarity measure. <strong>SSIM</strong> is the usual answer — it is what
+      similarity measure. <strong>SSIM</strong> is the usual answer. It is what
       <a href="https://gbaeval.com/blog/grading-iteration">GBA&nbsp;Eval settled on</a> after
       rejecting four alternatives. On the test below, SSIM scores a correct interpreter at
       <span class="num">0.9375</span> and an emulator that draws <em>nothing at all</em> at
@@ -253,8 +253,8 @@
     </p>
     <p class="lede">
       That failure has a boundary, and it is in closed form. It needs frames where nearly all the
-      drawn content moves <em>and</em> the display is sparse — and
-      <strong>a real GBA frame is in neither regime.</strong> The measurement that establishes
+      drawn content moves <em>and</em> the display is sparse.
+      <strong>A real GBA frame is in neither regime.</strong> The measurement that establishes
       that is below, along with the prediction of mine it falsified.
     </p>
   </div>
@@ -262,17 +262,17 @@
   <h3>One 16-byte ROM, three frames, 14 lit pixels out of 2048</h3>
   <div class="screens">
     <figure class="screen">
-      <figcaption class="cap">Reference <em>— COSMAC VIP</em></figcaption>
+      <figcaption class="cap">Reference <em>· COSMAC VIP</em></figcaption>
       <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="Glyph zero drawn at x=4"><rect class="lit" x="4" y="0" width="4" height="1"/><rect class="lit" x="4" y="1" width="1" height="1"/><rect class="lit" x="7" y="1" width="1" height="1"/><rect class="lit" x="4" y="2" width="1" height="1"/><rect class="lit" x="7" y="2" width="1" height="1"/><rect class="lit" x="4" y="3" width="1" height="1"/><rect class="lit" x="7" y="3" width="1" height="1"/><rect class="lit" x="4" y="4" width="4" height="1"/></svg>
       <p class="verdict is-ref"><span>SSIM</span> <b>1.0000</b></p>
     </figure>
     <figure class="screen">
-      <figcaption class="cap">Also correct <em>— CHIP-48</em></figcaption>
+      <figcaption class="cap">Also correct <em>· CHIP-48</em></figcaption>
       <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="The same glyph drawn four pixels to the right, at x=8"><rect class="lit" x="8" y="0" width="4" height="1"/><rect class="lit" x="8" y="1" width="1" height="1"/><rect class="lit" x="11" y="1" width="1" height="1"/><rect class="lit" x="8" y="2" width="1" height="1"/><rect class="lit" x="11" y="2" width="1" height="1"/><rect class="lit" x="8" y="3" width="1" height="1"/><rect class="lit" x="11" y="3" width="1" height="1"/><rect class="lit" x="8" y="4" width="4" height="1"/></svg>
       <p class="verdict is-fail"><span>SSIM</span> <b>0.9375</b></p>
     </figure>
     <figure class="screen">
-      <figcaption class="cap">Draws nothing <em>— a cheat</em></figcaption>
+      <figcaption class="cap">Draws nothing <em>· a cheat</em></figcaption>
       <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="An entirely blank screen"></svg>
       <p class="verdict"><span>SSIM</span> <b>0.9688</b></p>
     </figure>
@@ -280,7 +280,7 @@
 
   <p class="punch">
     The middle screen is not a bug. Two real CHIP-8 conventions disagree about one instruction, so
-    the glyph is drawn four pixels apart — and both are right. The grader ranks that legitimate
+    the glyph is drawn four pixels apart, and both are right. The grader ranks that legitimate
     difference <em>below</em> a submission that renders an empty display.
   </p>
 
@@ -291,7 +291,8 @@
     <p>
       A grader like this is the reward signal in a reinforcement-learning environment. If it ranks
       a correct implementation below one that does nothing, then the compute spent on that rollout
-      is not wasted — it is actively teaching the model that correct behaviour is wrong. Mechanize
+      is not wasted.
+      It is actively teaching the model that correct behaviour is wrong. Mechanize
       argues that <a href="https://www.mechanize.work/blog/cheap-rl-tasks-will-waste-compute/">cheap
       RL tasks waste compute</a>; this is the same argument one level down, about the grader rather
       than the task.
@@ -311,7 +312,7 @@
           <code>8XY6</code> is a shift. The original COSMAC VIP shifts <code>VY</code> into
           <code>VX</code>; CHIP-48 and SUPER-CHIP shift <code>VX</code> in place. Both are
           documented, and interpreters in the wild do both. This ROM computes an x position with
-          that instruction and draws the font glyph <code>0</code> there — so a correct interpreter
+          that instruction and draws the font glyph <code>0</code> there, so a correct interpreter
           draws the same 14 pixels at <strong>x=4</strong> or <strong>x=8</strong>, depending only
           on which convention it follows.
         </p>
@@ -377,7 +378,7 @@
       was ranked above. <strong>No threshold separates correct from cheating under any of the
       five.</strong> Exact match rejects both correct frames. Thresholding at τ=.05 accepts the
       blank screen. And GMSD scores a <em>wholly inverted</em> frame at exactly 1.0000, because
-      gradient magnitude is invariant under inversion — |∇(1−x)| = |∇x| — so every edge sits where
+      gradient magnitude is invariant under inversion: |∇(1−x)| = |∇x|. Every edge sits where
       it did and the measure reports perfection for an image wrong in every pixel.
     </p>
   </section>
@@ -385,8 +386,8 @@
   <section class="col">
     <h2>The mechanism, which is not an implementation bug</h2>
     <p>
-      SSIM pools over blocks. Moving the glyph four pixels disturbs <strong>two</strong> 8×8 blocks
-      — the one it left and the one it entered — while erasing it entirely disturbs
+      SSIM pools over blocks. Moving the glyph four pixels disturbs <strong>two</strong> 8×8 blocks,
+      the one it left and the one it entered, while erasing it entirely disturbs
       <strong>one</strong>. A measure that averages over blocks therefore penalises relocation more
       than deletion. That is a property of the measure, not of this ROM.
     </p>
@@ -400,17 +401,17 @@
     <h2 class="col">Three kinds of divergence, five quirks, every one of them pre-registered</h2>
     <div class="screens">
       <figure class="screen">
-        <figcaption class="cap">A <em>— relocation, 2 blocks</em></figcaption>
+        <figcaption class="cap">A <em>· relocation, 2 blocks</em></figcaption>
         <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="Glyph zero at x=8, four pixels right of the reference"><rect class="lit" x="8" y="0" width="4" height="1"/><rect class="lit" x="8" y="1" width="1" height="1"/><rect class="lit" x="11" y="1" width="1" height="1"/><rect class="lit" x="8" y="2" width="1" height="1"/><rect class="lit" x="11" y="2" width="1" height="1"/><rect class="lit" x="8" y="3" width="1" height="1"/><rect class="lit" x="11" y="3" width="1" height="1"/><rect class="lit" x="8" y="4" width="4" height="1"/></svg>
         <p class="verdict is-fail"><span>vs blank</span> <b>0.9375</b></p>
       </figure>
       <figure class="screen">
-        <figcaption class="cap">B <em>— substitution, 1 block</em></figcaption>
+        <figcaption class="cap">B <em>· substitution, 1 block</em></figcaption>
         <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="Glyph zero drawn in the top-left corner"><rect class="lit" x="0" y="0" width="4" height="1"/><rect class="lit" x="0" y="1" width="1" height="1"/><rect class="lit" x="3" y="1" width="1" height="1"/><rect class="lit" x="0" y="2" width="1" height="1"/><rect class="lit" x="3" y="2" width="1" height="1"/><rect class="lit" x="0" y="3" width="1" height="1"/><rect class="lit" x="3" y="3" width="1" height="1"/><rect class="lit" x="0" y="4" width="4" height="1"/></svg>
         <p class="verdict is-ref"><span>vs blank</span> <b>0.9943</b></p>
       </figure>
       <figure class="screen">
-        <figcaption class="cap">C <em>— partial addition, 1 block</em></figcaption>
+        <figcaption class="cap">C <em>· partial addition, 1 block</em></figcaption>
         <svg class="crt" viewBox="0 0 64 32" role="img" aria-label="Glyph clipped at the right edge of the screen"><rect class="lit" x="62" y="0" width="2" height="1"/><rect class="lit" x="62" y="1" width="1" height="1"/><rect class="lit" x="62" y="2" width="1" height="1"/><rect class="lit" x="62" y="3" width="1" height="1"/><rect class="lit" x="62" y="4" width="2" height="1"/></svg>
         <p class="verdict is-ref"><span>vs blank</span> <b>0.9688</b></p>
       </figure>
@@ -455,7 +456,7 @@
     </div>
     <p class="foot">
       <strong>D and E are replications, registered as such before they existed.</strong> ROM D
-      reaches relocation through a different instruction entirely — <code>BNNN</code> adds
+      reaches relocation through a different instruction entirely. <code>BNNN</code> adds
       <code>V0</code> on the VIP and <code>VX</code> on CHIP-48, so the two conventions jump to
       <em>different instructions</em>, and the VIP path has to leap over the CHIP-48 path or it
       falls through and overwrites its own answer. It reproduces ROM A to four decimal places. ROM
@@ -470,7 +471,7 @@
       similarity has a predictable blind spot for divergences that move something.</strong> A quirk
       that changes <em>where</em> output is drawn scores worse than drawing nothing; a quirk that
       changes <em>what</em> is drawn in the same place is scored correctly. ROM&nbsp;C also turned up
-      a defect in two interpreters that had passed every other ROM available here — they place
+      a defect in two interpreters that had passed every other ROM available here. They place
       wrapped columns one row low, computing the framebuffer index as
       <code>(x + i + (y+h)*64) % 2048</code>.
     </p>
@@ -518,8 +519,8 @@
       <text class="lbl" x="411" y="374" text-anchor="middle">categories evenly spaced; the axis is not linear</text>
     </svg>
     <p class="foot">
-      A 24-pixel shift scores <strong>identically</strong> to a 4-pixel one — six times the distance,
-      <span class="num">0.9375</span> either way — because both disturb the same two blocks. The
+      A 24-pixel shift scores <strong>identically</strong> to a 4-pixel one. Six times the distance,
+      <span class="num">0.9375</span> either way, because both disturb the same two blocks. The
       score declines only while the glyph positions still overlap, then goes constant. And SSIM sits
       below the blank screen at <em>every</em> non-zero displacement, so the failure is not an
       artefact of the magnitude first chosen. Predicted before the run, on the mechanism above.
@@ -527,7 +528,7 @@
   </section>
 
   <section>
-    <h2 class="col">Where the failure stops — the part I got wrong</h2>
+    <h2 class="col">Where the failure stops, and what I got wrong</h2>
     <div class="col">
       <p>
         The obvious objection to everything above is that a 64×32 display with 14 lit pixels is
@@ -539,7 +540,7 @@
       <p>
         I registered the boundary as <span class="num">φ&nbsp;&gt;&nbsp;0.5</span>, independent of
         density, and called it arithmetic rather than a guess. <strong>It was wrong.</strong> It
-        dropped the collision term — displaced content does not always land on dark pixels, and
+        dropped the collision term. Displaced content does not always land on dark pixels, and
         near half-lit most of it lands on pixels that were already on. Keeping the term:
       </p>
 <pre>blank frame       differs in  d·N
@@ -550,8 +551,8 @@ displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free l
         Density does not cancel. The curve leaves the unit square at
         <span class="num">d&nbsp;=&nbsp;0.5</span>: <strong>above half-lit, no amount of movement
         lets a blank frame win.</strong> Both of my earlier claims are slices of this one surface,
-        and §4.6 sits in its far corner — <span class="num">d=0.0068</span>,
-        <span class="num">φ=1</span> — which is precisely where the dropped term is negligible and
+        and §4.6 sits in its far corner at <span class="num">d=0.0068</span> and
+        <span class="num">φ=1</span>, which is precisely where the dropped term is negligible and
         the wrong derivation looked right.
       </p>
     </div>
@@ -589,7 +590,7 @@ displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free l
         <text x="594" y="342">0.40</text>
         <text x="720" y="342">0.50</text>
       </g>
-      <text class="lbl-i" x="405" y="368" text-anchor="middle">d — fraction of the display lit</text>
+      <text class="lbl-i" x="405" y="368" text-anchor="middle">d, the fraction of the display lit</text>
       <text class="lbl-i" x="405" y="390" text-anchor="middle">amber curve: derived boundary φ* = 1/(2(1−d)) · dots: measured, at densities held back from the derivation · y-axis: φ</text>
     </svg>
 
@@ -612,10 +613,10 @@ displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free l
     </div>
     <p class="foot">
       <strong>Three of four inside ±0.01, and the fourth outside the registered tolerance by
-      0.009 — so the prediction is recorded as falsified.</strong> It errs low at high density, in
+0.009, so the prediction is recorded as falsified.</strong> It errs low at high density, in
       the direction the registration said to check first: this generator moves a contiguous column
       band, so arriving content collides only in a narrow leading strip rather than in proportion
-      to φ, and that gap widens with d. A flat φ=0.5 boundary is ruled out outright — at d=0.30 it
+      to φ, and that gap widens with d. A flat φ=0.5 boundary is ruled out outright: at d=0.30 it
       predicts 0.5 against 0.72 measured.
     </p>
   </section>
@@ -624,7 +625,7 @@ displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free l
     <h2 class="col">And SSIM does not follow that curve at all</h2>
     <div class="col">
       <p>
-        SSIM pools over blocks, so it never sees global density — it sees <strong>block
+        SSIM pools over blocks, so it never sees global density. It sees <strong>block
         occupancy</strong>. Two frames with the same 1200 lit pixels, one packed into 19 blocks and
         one scattered across 600, hold <em>d</em> exactly constant:
       </p>
@@ -642,7 +643,7 @@ displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free l
       </table>
     </div>
     <p class="foot">
-      Pixel proportion cannot tell them apart — identical to twelve decimal places. SSIM scores the
+      Pixel proportion cannot tell them apart, identical to twelve decimal places. SSIM scores the
       blank frame <strong>350× apart</strong> on the same content. So the second prediction I
       registered here was also wrong, and wrong at the root: it compared SSIM's crossover
       <em>in φ</em> against pixel proportion's, and φ is not SSIM's parameter. No verdict actually
@@ -660,25 +661,25 @@ displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free l
         <strong>Is it my SSIM?</strong> No. Mine uses 8×8 blocks, matching the published
         description. Swapping in scikit-image's default 7×7 sliding window moves the numbers and
         changes no conclusion: <span class="num">0.9581</span> for ROM&nbsp;A against
-        <span class="num">0.9735</span> for the blank screen. One difference worth recording — the
-        sliding-window version does decline mildly with distance where the block version is flat, so
+        <span class="num">0.9735</span> for the blank screen. The sliding-window version does decline mildly with distance where the block version is flat, so
         “block count, not distance” is exact for block pooling and approximate for window pooling.
       </li>
       <li>
         <strong>Does one reference hide this?</strong> Yes, completely. Scored against the reference
-        alone, exact match, pixel proportion and SSIM all look sound — because at n=1 the population
+        alone, exact match, pixel proportion and SSIM all look sound,
+        because at n=1 the population
         <em>is</em> the yardstick and scores 1.0 by definition. Over seven interpreters containing
         one legitimate variation, none of the five separates. The n=1 table reads like a passing
         grade, which is the point.
       </li>
       <li>
         <strong>Are the correct frames really correct?</strong> Adjudicated by the test ROM's own
-        pass/fail marks, read positionally — not by agreement with my implementation. One of the
+        pass/fail marks, read positionally, not by agreement with my implementation. One of the
         seven fails nothing its peers pass; the other six each have a defect traced to a line in
         their own source.
       </li>
       <li>
-        <strong>Do real interpreters actually disagree on all five quirks?</strong> No — on three.
+        <strong>Do real interpreters actually disagree on all five quirks?</strong> No. On three.
         ROMs A, B and C split the population for real, 2 against 5. On <strong>D and E every one of
         the seven produces the same frame</strong>: all of them implement the VIP reading of
         <code>BNNN</code> and of VF reset, so those two divergent frames come from my own
@@ -686,7 +687,7 @@ displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free l
         test the mechanism and say nothing about a real disagreement, and the small finding in that
         is worth stating: the quirks that divide real implementations are a <em>subset</em> of the
         quirks that divide the documentation. Both ROMs cleared all four acceptance gates anyway,
-        which is its own problem — the gates required a population split in prose and never checked
+        which is its own problem. The gates required a population split in prose and never checked
         for one, so a fifth gate now reports it, and both ROMs fail it.
       </li>
     </ul>
@@ -696,18 +697,18 @@ displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free l
     <h2>What is new here, and what is not</h2>
     <p>
       <strong>Not new:</strong> SSIM's sensitivity to small translations is a documented drawback
-      with a purpose-built fix — CW-SSIM, Wang and Simoncelli, 2005. The pixel-proportion result is
+      with a purpose-built fix: CW-SSIM, Wang and Simoncelli, 2005. The pixel-proportion result is
       a replication; GBA Eval reported it themselves. GMSD's invariance under inversion follows from
       its construction. A page claiming to have discovered any of that would be wrong.
     </p>
     <p>
       <strong>What the literature did not have:</strong> the consequence for a reference-based
-      grader — that a documented metric property means a correct implementation is ranked below an
+      grader: that a documented metric property means a correct implementation is ranked below an
       empty screen, reachable through a legitimate platform disagreement rather than an adversarial
       input, with nothing in the score announcing which regime you are in.
     </p>
     <p>
-      <strong>Scope, now measured rather than conceded — and it costs this page its headline.</strong>
+      <strong>Scope, now measured rather than conceded. It costs this page its headline.</strong>
       I registered, before running it, that if a single displaced sprite on a realistic
       240×160 frame lost to a blank frame under none of the three metrics, then
       <em>§4.6's practical relevance to GBA Eval is materially reduced</em> and this page would
@@ -723,8 +724,7 @@ displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free l
     <p>
       What survives is narrower and, I think, more useful than the headline was: the regime is real,
       it is reachable by a legitimate platform disagreement rather than an adversarial input, and
-      <strong>it now has a closed-form boundary you can check your own frames against</strong> —
-      measure what fraction of drawn content your divergence moves, measure how much of the display
+      <strong>it now has a closed-form boundary you can check your own frames against</strong>. Measure what fraction of drawn content your divergence moves, measure how much of the display
       is lit, and see which side of <span class="num">φ(1−d) = ½</span> you are on. For SSIM,
       measure block occupancy instead. That is a test someone can run on their own grader in an
       afternoon, which the original finding was not.
@@ -733,7 +733,7 @@ displaced frame   differs in  2·φ·d·N·(1−d)     ← (1−d) is the free l
 
   <p class="end">
     <span>Rushil Jaiswal · built with Claude Code, directed and reviewed by me</span>
-    <span><a href="https://github.com/rushjais/verifier-audit">github.com/rushjais/verifier-audit</a> — ROM sources, the seven adapters, and the pre-registered predictions with dated amendments</span>
+    <span><a href="https://github.com/rushjais/verifier-audit">github.com/rushjais/verifier-audit</a> · ROM sources, the seven adapters, and the pre-registered predictions with dated amendments</span>
   </p>
 
 </div>

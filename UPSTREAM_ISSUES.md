@@ -1,4 +1,4 @@
-# Upstream issues — filed 2026-09-17
+# Upstream issues, filed 2026-09-17
 
 All four were filed after review. Each links to the issue as posted; the text below is what was
 submitted, minus the suggested-fix blocks that were dropped before filing.
@@ -10,14 +10,12 @@ submitted, minus the suggested-fix blocks that were dropped before filing.
 | `IslayLaphroaig/CHIP-8` | https://github.com/IslayLaphroaig/CHIP-8/issues/1 |
 | `cwithmichael/chip8_py` | https://github.com/cwithmichael/chip8_py/issues/2 |
 
-A second, unrelated defect was verified later the same day in two of them — sprite rows spilling
-onto the next scanline, from a linear framebuffer index — and filed separately, since the two bugs
+A second, unrelated defect was verified later the same day in two of them, sprite rows spilling
+onto the next scanline, from a linear framebuffer index, and filed separately, since the two bugs
 share nothing:
 
-| repo | issue |
-| --- | --- |
-| `robertolaru/chip8py` | https://github.com/robertolaru/chip8py/issues/2 |
-| `cwithmichael/chip8_py` | https://github.com/cwithmichael/chip8_py/issues/3 |
+Filed as [`robertolaru/chip8py` issue 2](https://github.com/robertolaru/chip8py/issues/2) and
+[`cwithmichael/chip8_py` issue 3](https://github.com/cwithmichael/chip8_py/issues/3).
 
 `wyattferguson/chip8-emulator` and `debugloop/chip8` have issues disabled and could not be
 filed. Their defects are recorded in `ADAPTERS.md` and remain unreported upstream.
@@ -35,8 +33,8 @@ All six filed issues are **open**, none has a maintainer reply yet:
 | [robertolaru#2](https://github.com/robertolaru/chip8py/issues/2) | Sprite rows spill onto the next scanline | open |
 | [cwithmichael#3](https://github.com/cwithmichael/chip8_py/issues/3) | Sprite rows spill onto the next scanline | open |
 
-**One defect remains unreported.** The `wyattferguson` defect is now filed as a pull request rather than an issue — https://github.com/wyattferguson/chip8-emulator/pull/9 — since that repo accepts no issues; see `UPSTREAM_PR.md`. Originally two remained unreported, and both repos still have issues disabled as of this check:
-`wyattferguson/chip8-emulator` (last push 2026-08-01, so actively maintained — a pull request is
+**One defect remains unreported.** The `wyattferguson` defect is now filed as a pull request rather than an issue, https://github.com/wyattferguson/chip8-emulator/pull/9, since that repo accepts no issues; see `UPSTREAM_PR.md`. Originally two remained unreported, and both repos still have issues disabled as of this check:
+`wyattferguson/chip8-emulator` (last push 2026-08-01, so actively maintained, a pull request is
 the only channel) and `debugloop/chip8` (last push 2022-04-25, dormant). Six filed is not six of
 six; it is six across the four repos that would accept them.
 
@@ -48,8 +46,8 @@ six; it is six across the four repos that would accept them.
 | `rudzen/Chip8Py` | no | yes | none (1 issue, unrelated) | yes |
 | `IslayLaphroaig/CHIP-8` | no | yes | none (0 issues total) | yes |
 | `cwithmichael/chip8_py` | no | yes | none (1 issue, unrelated) | yes |
-| `wyattferguson/chip8-emulator` | no | **disabled** | — | no — cannot file |
-| `debugloop/chip8` | no | **disabled** | — | no — cannot file |
+| `wyattferguson/chip8-emulator` | no | **disabled** |, | no, cannot file |
+| `debugloop/chip8` | no | **disabled** |, | no, cannot file |
 
 Every bug below was confirmed present at the repository's current HEAD, not only at the commit
 this project pinned.
@@ -110,8 +108,7 @@ elif sub_op == 5:  # SUB Vx, Vy
     chip8.v[15] = 1 if chip8.v[vx] > chip8.v[vy] else 0
 ```
 
-`VF` should be 1 when there is *no* borrow, i.e. when `Vx >= Vy`. With `>`, the equal case —
-result 0, no borrow — sets 0 instead. `8XY7` at line 134 has the same comparison with the operands
+`VF` should be 1 when there is *no* borrow, i.e. when `Vx >= Vy`. With `>`, the equal case, result 0, no borrow, sets 0 instead. `8XY7` at line 134 has the same comparison with the operands
 reversed.
 
 Separately, `VF` is assigned before `V[vx]` in every branch of the `8XY_` group, so an instruction
@@ -137,7 +134,7 @@ def set_vx_to_vx_plus_vy(self):
 ```
 
 `VF` is written before the operands are read, so when `VX` or `VY` *is* `VF` the operand read
-returns the flag just written rather than the register's value — the arithmetic result is wrong,
+returns the flag just written rather than the register's value, the arithmetic result is wrong,
 not only the flag. When `VF` is the destination it ends up holding the result instead of the flag.
 `set_vx_to_vx_minus_vy` and `set_vx_to_vy_minus_vx` share the ordering.
 

@@ -45,12 +45,17 @@ serif = ImageFont.truetype("/System/Library/Fonts/Supplemental/Georgia Bold.ttf"
 mono = ImageFont.truetype("/System/Library/Menlo.ttc", 19)
 monob = ImageFont.truetype("/System/Library/Menlo.ttc", 36)
 
+# The headline and its scope, because the short form overclaims on its own: the failure is real
+# and it is confined to a regime the page then derives.
 HEAD = "A correct emulator scored below a blank screen."
+QUAL = "Here is exactly when."
 while d.textlength(HEAD, font=serif) > W - 120 and serif.size > 28:
     serif = ImageFont.truetype(
         "/System/Library/Fonts/Supplemental/Georgia Bold.ttf", serif.size - 2
     )
-d.text(((W - d.textlength(HEAD, font=serif)) / 2, 104), HEAD, font=serif, fill=INK)
+qual_font = ImageFont.truetype("/System/Library/Fonts/Supplemental/Georgia.ttf", serif.size - 10)
+d.text(((W - d.textlength(HEAD, font=serif)) / 2, 78), HEAD, font=serif, fill=INK)
+d.text(((W - d.textlength(QUAL, font=qual_font)) / 2, 142), QUAL, font=qual_font, fill=MUTED)
 
 S, PW, PH, GAP = 5, WIDTH * 5, HEIGHT * 5, 40
 x0 = (W - (3 * PW + 2 * GAP)) // 2

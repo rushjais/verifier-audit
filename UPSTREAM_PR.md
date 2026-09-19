@@ -1,6 +1,6 @@
-# Draft pull request — `wyattferguson/chip8-emulator`
+# Draft pull request, `wyattferguson/chip8-emulator`
 
-**FILED 2026-09-18 — https://github.com/wyattferguson/chip8-emulator/pull/9** (open, mergeable, +6/−3 in one file).
+**FILED 2026-09-18, https://github.com/wyattferguson/chip8-emulator/pull/9** (open, mergeable, +6/−3 in one file).
 
 This repo has issues disabled, so a pull request was the only channel; it is actively maintained
 (last push 2026-08-01). Before filing, the defect was confirmed present at their **current HEAD**
@@ -9,7 +9,7 @@ HEAD: `wyattferguson` goes from 8 failures-against-peers to 0 on `4-flags.ch8`, 
 and no other interpreter's score moves.
 
 Two of the draft's three open questions were carried into the PR body rather than decided
-unilaterally — the `bool`-vs-`int` store was left alone as out of scope for an ordering fix, and
+unilaterally, the `bool`-vs-`int` store was left alone as out of scope for an ordering fix, and
 no test was included since the repo has no suite, both offered to the author. The third, whether
 to send PRs to the four repos with open unanswered issues, is still undecided and is the user's
 call.
@@ -39,20 +39,17 @@ def _store_vx_result(self, value: int) -> None:
 
 **Repro.** `8F14` (ADD VF, V1) with `VF = 200` and `V1 = 100`:
 
-| | VF |
-| --- | --- |
-| expected | `1` — the carry |
-| actual | `44` — the low byte of 200 + 100 |
+`VF` should hold `1`, the carry. It holds `44`, the low byte of 200 + 100.
 
 On `Timendus/chip8-test-suite`, `4-flags.ch8` reports 8 failures, all of them the "vF as the
 destination" cases.
 
 **Fix.** Compute the flag, store the result, then store the flag. Three call sites, no change to
-any value — only to the order they are written in.
+any value, only to the order they are written in.
 
 **After this change** `4-flags.ch8` reports 0 failures (47 of 47 marks pass, up from 39).
 Arithmetic is unaffected: `MAX_8BIT` is 256, so the existing wrap and the `value >= 0` carry
-test were already correct — I checked `ADD 200+100 → 44/VF=1`, `ADD 100+50 → 150/VF=0`,
+test were already correct. I checked `ADD 200+100 → 44/VF=1`, `ADD 100+50 → 150/VF=0`,
 `SUB 5-10 → 251/VF=0`, `SUB 10-5 → 5/VF=1` before and after, all unchanged.
 
 I found this while using several open-source CHIP-8 interpreters as a test population for an
@@ -105,10 +102,10 @@ population. Only `wyattferguson` changed:
 | debugloop | 15 | 15 |
 | islay | 16 | 16 |
 
-Counts are failures *against peers* — tests an interpreter fails that another one passes. After
+Counts are failures *against peers*, tests an interpreter fails that another one passes. After
 the change `wyattferguson` joins `craigthomas` as the only members with none.
 
-## Before submitting — open questions for the author
+## Before submitting, open questions for the author
 
 1. **Style.** `self.v[CARRY_FLAG] = value >= 0` stores a `bool`, not an `int`. The diff preserves
    that rather than changing it, to keep the change to ordering alone. Worth deciding whether to

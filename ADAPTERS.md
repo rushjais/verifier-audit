@@ -1,14 +1,14 @@
-# ADAPTERS.md — every change made to run someone else's interpreter
+# ADAPTERS.md, every change made to run someone else's interpreter
 
 An adapter's job is to drive a third-party interpreter and read its display. Every deviation
 from running that project as its author intended is listed here, because a misconfigured
-interpreter and a wrong one look identical from the outside — and this study exists to measure
+interpreter and a wrong one look identical from the outside, and this study exists to measure
 the difference between those two things. It has already bitten twice:
 
 - a `pygame.key.get_pressed()` stub returning `{}` made `craigthomas` appear to crash on the
   quirks ROM. Read at face value, a working implementation would have been dropped as broken.
 - `craigthomas`'s timers never advanced at all, because the adapter never called
-  `decrement_timers()` — their `emulator.py` does it, their CPU does not.
+  `decrement_timers()`, their `emulator.py` does it, their CPU does not.
 
 Each change below is one of three kinds:
 
@@ -19,7 +19,7 @@ Each change below is one of three kinds:
 | **config** | changes a value the project already exposes as a setting; no logic altered |
 
 A change that would alter emulation logic is not permitted. Where one was tempting, the project
-was rejected instead — see `manifest.REJECTED` (`shivrm/chip8` is the example: driving it would
+was rejected instead, see `manifest.REJECTED` (`shivrm/chip8` is the example: driving it would
 have meant reimplementing its fetch loop outside its class).
 
 Claims marked **[tested]** have a test in `tests/test_chip8_adapter_fidelity.py`.
@@ -28,10 +28,18 @@ Claims marked **[tested]** have a test in `tests/test_chip8_adapter_fidelity.py`
 
 ## Shared by all adapters
 
-| change | kind | why | evidence |
-|---|---|---|---|
-| Imports run inside `_isolated(root, *names)`, which purges colliding top-level module names before and after and restores `sys.path` | setup | Several of these projects ship a package called `chip8`. Without it, importing one hands the next that one's code, and two implementations agree perfectly because they *are* the same code — `honest_pass` reads 1.00 and the study concludes the opposite of the truth. | **[tested]** no modules or path left behind; interleaving two interpreters cannot change either one's output |
-| One frame = exactly `CYCLES_PER_FRAME` instructions | config | These projects disagree about the count. Comparing a frame built from 12 instructions with one built from 15 measures pacing, not correctness. | **[tested]** every adapter reports `frames × CYCLES_PER_FRAME` executed |
+**Isolated imports** (setup). Every import runs inside `_isolated(root, *names)`, which purges
+colliding top-level module names before and after and restores `sys.path`. Several of these
+projects ship a package called `chip8`. Without isolation, importing one hands the next that
+one's code, two implementations then agree perfectly because they *are* the same code,
+`honest_pass` reads 1.00, and the study concludes the opposite of the truth.
+**[tested]** no modules or path left behind, and interleaving two interpreters cannot change
+either one's output.
+
+**Fixed frame length** (config). One frame is exactly `CYCLES_PER_FRAME` instructions. These
+projects disagree about the count, and comparing a frame built from 12 instructions with one
+built from 15 measures pacing, not correctness.
+**[tested]** every adapter reports `frames × CYCLES_PER_FRAME` executed.
 
 **Not normalised, deliberately:** timer semantics. `craigthomas` decrements on demand,
 `wyattferguson` once per `cycle()`, `debugloop` every fifth cycle via a counter it never resets
@@ -55,41 +63,41 @@ pacing is not safely comparable across this population.**
 | change | kind | why | evidence |
 |---|---|---|---|
 | `pygame` stubbed, including `display.set_mode` | stub | `Screen.__init__` opens a window. | **[tested]** as above |
-| **Their** `Screen`, `Keypad`, `Audio(mute=True)` are used, not stand-ins | — | `Screen.flip_pixel` contains their wrap decision. Substituting my framebuffer would replace their behaviour with mine. | **[tested]** glyph matches the reference |
-| `chip8.cpu.CPU_CYCLES_PER_TICK` retuned from 12 to `CYCLES_PER_FRAME` | config | Their `cycle()` is one 60Hz tick: timers once, then that many instructions. | **[tested]** equal *total* instructions produce an identical final frame at either setting — the value changes pacing only |
-| ROM written to a temp file | setup | `RAM(rom_path)` loads from a path. | — |
-| `cpu.decode` wrapped to count instructions | — | Their `cycle()` drives the loop, so the adapter cannot otherwise count. Counting only. | **[tested]** counted total matches the frame rule |
+| **Their** `Screen`, `Keypad`, `Audio(mute=True)` are used, not stand-ins |, | `Screen.flip_pixel` contains their wrap decision. Substituting my framebuffer would replace their behaviour with mine. | **[tested]** glyph matches the reference |
+| `chip8.cpu.CPU_CYCLES_PER_TICK` retuned from 12 to `CYCLES_PER_FRAME` | config | Their `cycle()` is one 60Hz tick: timers once, then that many instructions. | **[tested]** equal *total* instructions produce an identical final frame at either setting, the value changes pacing only |
+| ROM written to a temp file | setup | `RAM(rom_path)` loads from a path. |, |
+| `cpu.decode` wrapped to count instructions |, | Their `cycle()` drives the loop, so the adapter cannot otherwise count. Counting only. | **[tested]** counted total matches the frame rule |
 
 ## debugloop/chip8
 
 | change | kind | why | evidence |
 |---|---|---|---|
-| No pygame at all; `ui.py` (curses) is never imported | — | Their emulator takes an injectable UI. | — |
+| No pygame at all; `ui.py` (curses) is never imported |, | Their emulator takes an injectable UI. |, |
 | `DebugloopUI` mirrors their UI seam: an **unbounded** set of `(x, y)`, bounded only at frame capture | stub | Their `draw_sprite` neither wraps nor clips, and their collision check reads the same unbounded set. Imposing wrapping would change behaviour they did not write. | **[tested]** glyph matches the reference |
-| `screen_redraw` is a no-op | stub | It only repaints curses. The set *is* the display. | — |
+| `screen_redraw` is a no-op | stub | It only repaints curses. The set *is* the display. |, |
 | `emu.time.sleep` neutralised | config | They sleep 1/300s per cycle to pace a live game. | **[tested]** identical frames with the real sleep restored |
-| ROM written to a temp file | setup | `Chip8(filename, ui)` loads from a path. | — |
+| ROM written to a temp file | setup | `Chip8(filename, ui)` loads from a path. |, |
 
 ## IslayLaphroaig/CHIP-8
 
 | change | kind | why | evidence |
 |---|---|---|---|
-| **No stubbing of any kind** | — | No GUI dependency. | — |
+| **No stubbing of any kind** |, | No GUI dependency. |, |
 | `load_data("font_set", 0)` then the ROM at 512 | setup | Their `main.py` does exactly this. | **[tested]** glyph matches the reference |
 | `update_timers()` once per frame | setup | Their `main.py` does it per frame. | **[tested]** the delay timer advances |
 
 ---
 
-# Why each interpreter fails — their code, not the adapter
+# Why each interpreter fails, their code, not the adapter
 
 The headline observation rests on six interpreters failing the correctness suite, so each failure
 has to be traceable to *their* source rather than to something the adapter did. Line numbers are
 at the pinned commits. Four of six are traced; the remaining two are marked honestly as untraced.
 
 All six draw exactly 230 lit pixels on the ibm-logo control, identical to the reference and to
-each other — so the adapters run them correctly. What follows are defects in the interpreters.
+each other, so the adapters run them correctly. What follows are defects in the interpreters.
 
-### wyattferguson — `chip8/cpu.py:157-160`
+### wyattferguson, `chip8/cpu.py:157-160`
 
 ```text
 def _store_vx_result(self, value: int) -> None:
@@ -97,13 +105,13 @@ def _store_vx_result(self, value: int) -> None:
     self.v[self.x] = value % MAX_8BIT
 ```
 
-**One defect, not three — corrected 2026-09-18.** An earlier version of this entry claimed three:
+**One defect, not three, corrected 2026-09-18.** An earlier version of this entry claimed three:
 that `% MAX_8BIT` wrapped at 255, and that carry was flagged at `>= 255`. Both were wrong, and
 wrong for the same reason: I read `MAX_8BIT` as 255 without opening `constants.py`, where it is
 **256**. With 256 the wrap is correct, and `add_vx_vy` passing `total - 256` makes
 `value >= 0` exactly `total >= 256`, which is also correct. Verified by probe:
 ADD 200+100 gives V1=44 VF=1, ADD 100+50 gives V1=150 VF=0, SUB 5-10 gives V1=251 VF=0,
-SUB 10-5 gives V1=5 VF=1 — all correct.
+SUB 10-5 gives V1=5 VF=1, all correct.
 
 The real defect is the **write order**. `VF` is assigned before `V[x]`, so when `x == 0xF` the
 second line overwrites the flag with the arithmetic result. Probe: ADD with `x = 0xF`,
@@ -111,7 +119,7 @@ second line overwrites the flag with the arithmetic result. Probe: ADD with `x =
 be used as the vX operand" case the Timendus flags test checks, and `shr_vx` / `shl_vx` share the
 same ordering.
 
-### robertolaru — `cpu.py:256-261`
+### robertolaru, `cpu.py:256-261`
 
 ```text
 res = (self.v[vx] + self.v[vy]) & 0xff
@@ -123,7 +131,7 @@ if res > 0xff:
 `res` is masked to 8 bits on the line above, so `res > 0xff` can never be true. The carry branch
 is dead code and VF is always 0.
 
-### debugloop — `emu.py:112-114`
+### debugloop, `emu.py:112-114`
 
 ```text
 result = self.v[...] + self.v[...]
@@ -134,13 +142,13 @@ self.v[...] = result & 0xffff
 An 8-bit addition maxes at 510 (`0x1FE`), so `& 0xf0000` is always 0 and VF is never set. The
 result is then masked to 16 bits rather than 8, leaving Vx untruncated.
 
-### cwithmichael — `cpu.py:172-176`
+### cwithmichael, `cpu.py:172-176`
 
 The carry test itself is correct (`v[y] > 0xFF - v[x]`), but VF is assigned *before* the addition
-is stored. When VF is the destination or an operand the sum overwrites the flag — the same
+is stored. When VF is the destination or an operand the sum overwrites the flag, the same
 vF-as-operand case as wyattferguson, arrived at independently.
 
-### islay — `src/chip8.py:99-129`
+### islay, `src/chip8.py:99-129`
 
 ```text
 def set_vx_to_vx_plus_vy(self):
@@ -154,7 +162,7 @@ just written rather than the register's value. That is worse than the usual vF-a
 which corrupts only the flag; here it corrupts the arithmetic. Separately,
 `set_vx_to_vx_shl_1` (line 129) assigns `self.v[x] << 1` with no `& 0xFF`, leaving VX above 255.
 
-### rudzen — `cpu.py:128, 134`
+### rudzen, `cpu.py:128, 134`
 
 ```text
 elif sub_op == 5:  # SUB Vx, Vy
@@ -165,7 +173,7 @@ Borrow is computed with `>` where it needs `>=`. When VX == VY the subtraction d
 VF should be 1; this sets 0. The same off-by-one repeats for SUBN at line 134. VF is also assigned
 before VX in every branch of the `8XY_` group, so a VF destination clobbers the flag.
 
-### robertolaru and cwithmichael, second defect — sprite rows spill onto the next scanline
+### robertolaru and cwithmichael, second defect, sprite rows spill onto the next scanline
 
 `robertolaru/cpu.py:317` and `cwithmichael/cpu.py:243` compute the framebuffer position as a
 single linear index:
@@ -181,7 +189,7 @@ independently; it is a common one.
 
 Verified causally: a one-row sprite of `0xFF` drawn at x=62, y=0 must occupy a single scanline.
 Both place columns 62–63 on row 0 and the remaining six pixels on **row 1**. Every other
-interpreter keeps the row intact — three wrap within the row, two clip at the edge, and both of
+interpreter keeps the row intact, three wrap within the row, two clip at the edge, and both of
 those are defensible readings of the quirk. Spilling onto the next row is not.
 
 Found by ROM C, not by the reference suite: the only test ROM in that suite covering sprite edge
