@@ -1,0 +1,34 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - run: uv sync --frozen
+
+      # Deliberately WITHOUT `python -m vaudit.tasks.chip8.fetch`.
+      #
+      # The population is seven third-party repositories at pinned commits. Cloning them on every
+      # push would make this job depend on other people's availability, and a green badge would
+      # then be partly a statement about their hosting. Without them the adapter tests skip by
+      # design, and the badge attests exactly what runs here: format, lint, and the offline suite.
+      # The full suite — including the population — is what `make check` runs locally after a
+      # fetch, and §9 of WRITEUP.md records that run from a clean clone.
+      - run: make check
+
+      - name: State what this run actually covered
+        if: always()
+        run: uv run pytest -q --collect-only 2>/dev/null | tail -1

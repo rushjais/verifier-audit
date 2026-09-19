@@ -12,9 +12,10 @@
 > pattern has a direct analogue in building RL graders — which is the argument this document is
 > actually making.
 
-**Authorship.** Built with Claude Code. I set the direction, made the scoping calls, reviewed the
-output, and pushed back on it — including the eligibility amendments, the decision not to weaken
-the correctness bar, and the literature search that cost the project its novelty claims. The code
+**Authorship.** Written with an AI coding assistant under my direction. I set the direction, made
+the scoping calls, reviewed the output and pushed back on it — including the eligibility
+amendments, the decision not to weaken the correctness bar, and the literature search that cost
+the project its novelty claims. The code
 and most of the prose were written by the model under that direction. §2 records who introduced
 each defect.
 

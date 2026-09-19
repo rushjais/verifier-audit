@@ -1,5 +1,7 @@
 # vaudit
 
+[![check](https://github.com/rushjais/verifier-audit/actions/workflows/check.yml/badge.svg)](https://github.com/rushjais/verifier-audit/actions/workflows/check.yml)
+
 ### A correct emulator scored below a blank screen. Here is exactly when that happens.
 
 I wrote five CHIP-8 ROMs, each isolating one documented platform quirk, each with its expected
@@ -122,6 +124,12 @@ Run `make check` *before* fetching and you get 140 passed, 21 skipped — the ad
 cleanly when the population is absent, so the suite can never go green while silently claiming a
 study that did not run.
 
+**What the badge actually covers**, since a badge is itself a claim: CI runs format, lint and the
+offline suite — the 140 — and deliberately does *not* fetch the population, because cloning seven
+third-party repositories on every push would make a green badge partly a statement about their
+hosting. The full 191 is what `make check` runs locally after a fetch, and §9 of
+[`WRITEUP.md`](WRITEUP.md) records that run from a clean clone, dated.
+
 ---
 
 ## Honest limitations
@@ -176,6 +184,7 @@ tampering by rebuilding its test suite from the task, but a candidate could stil
 expected values out of the generated module's namespace. `isolation.py` closes that by putting a
 process boundary between the candidate and the answers — the child receives only the inputs.
 
-**Authorship.** Built with Claude Code. I set the direction, made the scoping calls, reviewed the
-output and pushed back on it — including the eligibility amendments, the decision not to weaken
-the correctness bar, and the literature search that cost the project its novelty claims.
+**Authorship.** Written with an AI coding assistant under my direction. I set the direction, made
+the scoping calls, reviewed the output and pushed back on it — including the eligibility
+amendments, the decision not to weaken the correctness bar, and the literature search that cost
+the project its novelty claims.
